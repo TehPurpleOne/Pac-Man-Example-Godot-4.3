@@ -1,0 +1,11 @@
+[gd_resource type="AnimatedTexture" load_steps=3 format=3 uid="uid://wy8008s6g8ba"]
+
+[ext_resource type="Texture2D" uid="uid://b8seelahv1i1i" path="res://assets/tiles/tiles.png" id="1_bntot"]
+[ext_resource type="Texture2D" uid="uid://bx3jb3poftouy" path="res://assets/tiles/tilesB.png" id="2_ccr1b"]
+
+[resource]
+frames = 2
+frame_0/texture = ExtResource("1_bntot")
+frame_0/duration = 0.25
+frame_1/texture = ExtResource("2_ccr1b")
+frame_1/duration = 0.25
