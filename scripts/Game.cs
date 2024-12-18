@@ -14,6 +14,7 @@ public partial class Game : Node2D
 	private int ticks = 0;
 	private int ticksToNext = 0;
 	private int phase = 0;
+	private int dotEatSample = 0;
 
 	private Vector2I lastGridPos = Vector2I.Zero;
 
@@ -39,10 +40,26 @@ public partial class Game : Node2D
 		ticks++; // Ticks will always count up regardless of the current state. Use for timing of events.
 
 		if(lastGridPos != p.gridPos) {
+			if(tml.GetCellSourceId(p.gridPos) == 0) {
+				TileData data = tml.GetCellTileData(p.gridPos);
+				bool smallDot = (bool)data.GetCustomData("small");
+				bool largeDot = (bool)data.GetCustomData("large");
+				if(smallDot || largeDot) {
+					tml.SetCell(p.gridPos, -1);
 
-			int data = tml.GetCellAlternativeTile(p.gridPos);
+					if(smallDot) {
+						p.moveDelay = 1; // Delay Pac-Man by a single frame.
 
-			GD.Print(data);
+						// Fun fact, the eating noises actually alternate between two samples in the arcade original. This is recreated here.
+						PlaySingle("eat_dot_" + dotEatSample.ToString());
+						dotEatSample++;
+						if(dotEatSample > 1) dotEatSample = 0;
+
+					} else {
+						p.moveDelay = 3;
+					}
+				}
+			}
 			lastGridPos = p.gridPos;
 		}
 	}
@@ -140,6 +157,7 @@ public partial class Game : Node2D
 		switch(oldState) {
 			case states.SHOWACTORS:
 				rText.Hide();
+				p.SetState(PacMan.states.ACTIVE);
 				break;
 		}
 	}
@@ -173,5 +191,35 @@ public partial class Game : Node2D
 			AudioStream loopSFX = (AudioStream)GD.Load(path);
 			m.PlayLoopSound(loopSFX);
 		} else GD.Print("Sound sample ",name," not found!");
+	}
+
+	public bool IsDirectionValid(Vector2I pos, Vector2I dir) {
+		bool allowed = false;
+		Vector2I newTile = pos + dir;
+
+		if(tml.GetCellSourceId(newTile) == -1) {
+			allowed = true;
+		}
+
+		if(tml.GetCellSourceId(newTile) == 0) {
+			TileData data = tml.GetCellTileData(newTile);
+			bool collectible = (bool)data.GetCustomData("small") || (bool)data.GetCustomData("large");
+			if(collectible) {
+				allowed = true;
+			}
+		}
+
+		return allowed;
+	}
+
+	public bool DetectCollision(Vector2I pos, Vector2I dir) {
+		Vector2I newTile = pos + dir;
+		if(tml.GetCellSourceId(newTile) == 0) {
+			TileData data = tml.GetCellTileData(newTile);
+			bool wall = (bool)data.GetCustomData("wall");
+			if(wall) return true;
+		}
+
+		return false;
 	}
 }
