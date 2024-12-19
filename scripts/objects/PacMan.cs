@@ -3,11 +3,13 @@ using System;
 
 public partial class PacMan : Node2D
 {
-	private AnimatedSprite2D sprite;
+	private Master m;
 	private Game g;
+	private AnimatedSprite2D sprite;
 
-	private float speed = 80;
+	private float speed = 75.75757625f;
 	private float speedMod = 1;
+	private float baseMod = 1;
 	private Vector2I direction = Vector2I.Left;
 	private Vector2I oldDirection = Vector2I.Left;
 	public Vector2I desiredDir = Vector2I.Zero;
@@ -20,6 +22,7 @@ public partial class PacMan : Node2D
 
 
     public override void _Ready() {
+		m = (Master)GetNode("/root/Master");
 		g = (Game)GetParent();
         sprite = (AnimatedSprite2D)GetNode("Sprite");
 
@@ -41,7 +44,7 @@ public partial class PacMan : Node2D
 			case states.ACTIVE:
 				gridPos = GetGridPosition(Position);
 
-				if(gridPos.X <= 5 && gridPos.Y == 17 && speedMod != 0.75f || gridPos.X >= 22 && gridPos.Y == 17 && speedMod != 0.75f) speedMod = 0.75f; else speedMod = 1;
+				speedMod = SpeedModifier();
 
 				// Handle Input
 				if(Input.IsActionPressed("ui_up")) {
@@ -101,6 +104,30 @@ public partial class PacMan : Node2D
 
 		ExitState(previousState, newState);
 		EnterState(currentState, previousState);
+	}
+
+	private float SpeedModifier() {
+		float newMod = 0;
+
+		switch(m.level) {
+			case 1:
+				if(g.scaredTicks == 0) newMod = 0.80f; else newMod = 0.90f;
+				break;
+			
+			case int v when m.level >= 2 && m.level <= 4:
+				if(g.scaredTicks == 0) newMod = 0.90f; else newMod = 0.95f;
+				break;
+			
+			case int v when m.level >= 5 && m.level <= 20:
+				if(g.scaredTicks == 0) newMod = 1f; else newMod = 1f;
+				break;
+			
+			case int v when m.level >= 21:
+				if(g.scaredTicks == 0) newMod = 0.95f; else newMod = 1f;
+				break;
+		}
+
+		return newMod;
 	}
 
 	private Vector2I GetGridPosition(Vector2 pos) {

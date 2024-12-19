@@ -7,14 +7,22 @@ public partial class Game : Node2D
 	private TileMapLayer tml;
 	private PacMan p;
 
-	private enum states {NULL, INIT, SHOWTEXT, SHOWACTORS, SCATTER, CHASE, LOSE, WIN, GAMEOVER}
-	private states currentState = states.NULL;
+	public enum states {NULL, INIT, SHOWTEXT, SHOWACTORS, SCATTER, CHASE, LOSE, WIN, NEXTLEVEL, GAMEOVER}
+	public states currentState = states.NULL;
 	private states previousState = states.NULL;
 
 	private int ticks = 0;
 	private int ticksToNext = 0;
 	private int phase = 0;
 	private int dotEatSample = 0;
+	public int scaredTicks = 0;
+	private int dotsEaten = 0;
+	private int bigDotsEaten = 0;
+	private int eatenGhosts = 0;
+	private int mazePalette = 0;
+
+	private bool scaredMode = true;
+	private bool eyesMode = false;
 
 	private Vector2I lastGridPos = Vector2I.Zero;
 
@@ -38,33 +46,108 @@ public partial class Game : Node2D
 
 	private void StateLogic(double delta) {
 		ticks++; // Ticks will always count up regardless of the current state. Use for timing of events.
+		if(scaredTicks > 0) scaredTicks--;
 
-		if(lastGridPos != p.gridPos) {
-			if(tml.GetCellSourceId(p.gridPos) == 0) {
-				TileData data = tml.GetCellTileData(p.gridPos);
-				bool smallDot = (bool)data.GetCustomData("small");
-				bool largeDot = (bool)data.GetCustomData("large");
-				if(smallDot || largeDot) {
-					tml.SetCell(p.gridPos, -1);
-
-					if(smallDot) {
-						p.moveDelay = 1; // Delay Pac-Man by a single frame.
-
-						// Fun fact, the eating noises actually alternate between two samples in the arcade original. This is recreated here.
-						PlaySingle("eat_dot_" + dotEatSample.ToString());
-						dotEatSample++;
-						if(dotEatSample > 1) dotEatSample = 0;
-
-					} else {
-						p.moveDelay = 3;
+		switch(currentState) {
+			case states.SCATTER:
+			case states.CHASE:
+				// Handle the looping sound effects
+				// Siren
+				if(scaredMode && scaredTicks == 0 || eyesMode && eatenGhosts == 0) {
+					switch(bigDotsEaten) {
+						case 0:
+							PlayLoop("siren0");
+							break;
+						
+						case 1:
+							PlayLoop("siren01");
+							break;
+						
+						case 2:
+							PlayLoop("siren2");
+							break;
+						
+						case 3:
+							PlayLoop("siren3");
+							break;
+						
+						case 4:
+							PlayLoop("siren4");
+							break;
 					}
+					scaredMode = false;
+					eyesMode = false;
 				}
-			}
-			lastGridPos = p.gridPos;
+
+				// Frightened Mode
+				if(scaredTicks > 0 && !scaredMode) {
+					PlayLoop("fright");
+					scaredMode = true;
+				}
+
+				// Eyeballs Mode
+				if(eatenGhosts > 0 && !eyesMode) {
+					PlayLoop("eyes");
+					eyesMode = true;
+				}
+
+				if(lastGridPos != p.gridPos) {
+					if(tml.GetCellSourceId(p.gridPos) == 0) {
+						TileData data = tml.GetCellTileData(p.gridPos);
+						bool smallDot = (bool)data.GetCustomData("small");
+						bool largeDot = (bool)data.GetCustomData("large");
+						if(smallDot || largeDot) {
+							tml.SetCell(p.gridPos, -1);
+
+							if(smallDot) {
+								p.moveDelay = 1; // Delay Pac-Man by a single frame.
+
+								// Fun fact, the eating noises actually alternate between two samples in the arcade original. This is recreated here.
+								PlaySingle("eat_dot_" + dotEatSample.ToString());
+								dotEatSample++;
+								if(dotEatSample > 1) dotEatSample = 0;
+
+							} else {
+								p.moveDelay = 3;
+								bigDotsEaten++;
+								scaredTicks = SetFrightenedMode();
+							}
+							dotsEaten++;
+						}
+					}
+					lastGridPos = p.gridPos;
+				}
+				break;
+
+			case states.WIN:
+				switch(ticks) {
+					case 60:
+						p.Hide();
+						for(int i = 0; i < GetTree().GetNodesInGroup("ghost").Count; i++) {
+							Ghost boo = (Ghost)GetTree().GetNodesInGroup("ghost")[i];
+							boo.Hide();
+						}
+						break;
+				}
+
+				if(ticks >= 60 && ticks % 10 == 0) {
+					mazePalette++;
+					if(mazePalette > 1) mazePalette = 0;
+					GD.Print(mazePalette);
+
+					ShaderMaterial sm = (ShaderMaterial)tml.Material;
+					sm.SetShaderParameter("palette_index", mazePalette);
+					GD.Print(sm.GetShaderParameter("palette_index"));
+				}
+				break;
 		}
+
+		
 	}
 
 	private states GetTransition(double delta) {
+		
+
 		switch(currentState) {
 			case states.INIT:
 				if(ticks == 1) return states.SHOWTEXT;
@@ -80,10 +163,16 @@ public partial class Game : Node2D
 
 			case states.SCATTER:
 				if(ticks == ticksToNext) return states.CHASE;
+				if(dotsEaten == 244) return states.WIN;
 				break;
 
 			case states.CHASE:
 				if(ticks == ticksToNext) return states.SCATTER;
+				if(dotsEaten == 244) return states.WIN;
+				break;
+			
+			case states.WIN:
+				if(ticks == 150) return states.NEXTLEVEL;
 				break;
 		}
 
@@ -108,6 +197,11 @@ public partial class Game : Node2D
 			case states.SHOWACTORS:
 				pText.Hide();
 				p.Show();
+
+				for(int i = 0; i < GetTree().GetNodesInGroup("ghost").Count; i++) {
+					Ghost boo = (Ghost)GetTree().GetNodesInGroup("ghost")[i];
+					boo.Show();
+				}
 				break;
 
 			case states.SCATTER:
@@ -146,6 +240,16 @@ public partial class Game : Node2D
 				}
 				phase++;
 				break;
+			
+			case states.WIN:
+				GetTree().Paused = true;
+				break;
+			
+			case states.NEXTLEVEL:
+				m.level++;
+				GetTree().Paused = false;
+				GetTree().ReloadCurrentScene();
+				break;
 		}
 	}
 
@@ -175,7 +279,6 @@ public partial class Game : Node2D
 	}
 
 	private void PlaySingle(string name) {
-		GD.Print("Attempting to play sample: ",name);
 		// This function will call a non-looping sound sample.
 		string path = "res://assets/audio/" + name + ".wav";
 		if(ResourceLoader.Exists(path)) {
@@ -190,7 +293,7 @@ public partial class Game : Node2D
 		if(ResourceLoader.Exists(path)) {
 			AudioStream loopSFX = (AudioStream)GD.Load(path);
 			m.PlayLoopSound(loopSFX);
-		} else GD.Print("Sound sample ",name," not found!");
+		} else GD.Print("Loop sample ",name," not found!");
 	}
 
 	public bool IsDirectionValid(Vector2I pos, Vector2I dir) {
@@ -221,5 +324,50 @@ public partial class Game : Node2D
 		}
 
 		return false;
+	}
+
+	private int SetFrightenedMode() {
+		int newValue = 0;
+
+		switch(m.level) {
+			case 1:
+				newValue = 360;
+				break;
+			
+			case 2:
+			case 6:
+			case 10:
+				newValue = 300;
+				break;
+			
+			case 3:
+				newValue = 240;
+				break;
+			
+			case 4:
+			case 14:
+				newValue = 180;
+				break;
+			
+			case 5:
+			case 7:
+			case 8:
+			case 11:
+				newValue = 120;
+				break;
+			
+			case 9:
+			case 12:
+			case 13:
+			case 15:
+			case 16:
+			case 18:
+				newValue = 60;
+				break;
+		}
+
+		// Add trigger to send Ghosts into frightened mode here.
+
+		return newValue;
 	}
 }

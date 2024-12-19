@@ -1,15 +1,22 @@
-[gd_scene load_steps=10 format=4 uid="uid://bib5kf4aecbfd"]
+[gd_scene load_steps=19 format=4 uid="uid://bib5kf4aecbfd"]
 
 [ext_resource type="Script" path="res://scripts/Game.cs" id="1_rcpbo"]
+[ext_resource type="Shader" path="res://assets/shader/palette.gdshader" id="2_mbe48"]
 [ext_resource type="FontFile" uid="uid://dmapn6tece8tc" path="res://assets/font/font.png" id="2_r35ot"]
-[ext_resource type="Shader" path="res://assets/shader/mazepal.gdshader" id="3_hbjf7"]
 [ext_resource type="Texture2D" uid="uid://wy8008s6g8ba" path="res://assets/tiles/mazetiles.tres" id="3_ykt7y"]
 [ext_resource type="Texture2D" uid="uid://c6slnf4rxcpb7" path="res://assets/tiles/tilepal.png" id="4_hiwyc"]
 [ext_resource type="PackedScene" uid="uid://dnj5v7wrqju3h" path="res://scenes/objects/pac_man.tscn" id="6_ow0xe"]
+[ext_resource type="PackedScene" uid="uid://0fk1vhyh81fp" path="res://scenes/objects/inky.tscn" id="7_m1ptb"]
+[ext_resource type="Texture2D" uid="uid://di17j8e3tc4xg" path="res://assets/sprites/ghost_palette.png" id="8_j4uda"]
+[ext_resource type="PackedScene" uid="uid://dwrl7oeqd0oh7" path="res://scenes/objects/pinky.tscn" id="9_tpd7g"]
+[ext_resource type="PackedScene" uid="uid://cx7kj24lx2emw" path="res://scenes/objects/blinky.tscn" id="10_02ij2"]
+[ext_resource type="PackedScene" uid="uid://jx0xrqdrraps" path="res://scenes/objects/clyde.tscn" id="11_ups55"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_yn6i5"]
-shader = ExtResource("3_hbjf7")
-shader_parameter/index = 0
+resource_local_to_scene = true
+shader = ExtResource("2_mbe48")
+shader_parameter/palette_count = 2.0
+shader_parameter/palette_index = 0.0
 shader_parameter/palette = ExtResource("4_hiwyc")
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_36guq"]
@@ -106,7 +113,36 @@ custom_data_layer_2/name = "wall"
 custom_data_layer_2/type = 1
 sources/0 = SubResource("TileSetAtlasSource_36guq")
 
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_4wp0p"]
+resource_local_to_scene = true
+shader = ExtResource("2_mbe48")
+shader_parameter/palette_count = 7.0
+shader_parameter/palette_index = 0.0
+shader_parameter/palette = ExtResource("8_j4uda")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_b6bj4"]
+resource_local_to_scene = true
+shader = ExtResource("2_mbe48")
+shader_parameter/palette_count = 7.0
+shader_parameter/palette_index = 1.0
+shader_parameter/palette = ExtResource("8_j4uda")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_6ogjk"]
+resource_local_to_scene = true
+shader = ExtResource("2_mbe48")
+shader_parameter/palette_count = 7.0
+shader_parameter/palette_index = 2.0
+shader_parameter/palette = ExtResource("8_j4uda")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_2404k"]
+resource_local_to_scene = true
+shader = ExtResource("2_mbe48")
+shader_parameter/palette_count = 7.0
+shader_parameter/palette_index = 3.0
+shader_parameter/palette = ExtResource("8_j4uda")
+
 [node name="Game" type="Node2D"]
+process_mode = 3
 script = ExtResource("1_rcpbo")
 
 [node name="TileMapLayer" type="TileMapLayer" parent="."]
@@ -225,5 +261,37 @@ text = "GAME  OVER"
 horizontal_alignment = 2
 
 [node name="PacMan" parent="." instance=ExtResource("6_ow0xe")]
+process_mode = 1
 visible = false
 position = Vector2(112, 212)
+
+[node name="Inky" parent="." instance=ExtResource("7_m1ptb")]
+process_mode = 1
+visible = false
+material = SubResource("ShaderMaterial_4wp0p")
+position = Vector2(112, 116)
+
+[node name="Pinky" parent="." instance=ExtResource("9_tpd7g")]
+process_mode = 1
+visible = false
+material = SubResource("ShaderMaterial_b6bj4")
+position = Vector2(112, 140)
+
+[node name="Blinky" parent="." instance=ExtResource("10_02ij2")]
+process_mode = 1
+visible = false
+material = SubResource("ShaderMaterial_6ogjk")
+position = Vector2(96, 140)
+
+[node name="Clyde" parent="." instance=ExtResource("11_ups55")]
+process_mode = 1
+visible = false
+material = SubResource("ShaderMaterial_2404k")
+position = Vector2(128, 140)
+
+[node name="Targets" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 224.0
+offset_bottom = 288.0
+metadata/_edit_lock_ = true

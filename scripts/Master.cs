@@ -16,7 +16,6 @@ public partial class Master : Node2D
 	public int p2HiScore = 0;
 
 	public void PlaySingleSound(AudioStream name) {
-		GD.Print("Sample received.");
 		// Create a new AudioStreamPlayer for the sound effect.
 		AudioStreamPlayer singlePlayer = new AudioStreamPlayer();
 		AddChild(singlePlayer);
