@@ -1,9 +1,13 @@
 using Godot;
 using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 public partial class Inky : Ghost
 {
-	// Called when the node enters the scene tree for the first time.
+	private bool cruiseElroyA = false;
+	private bool cruiseElroyB = false;
+
 	public override void _Ready() {
 		g = (Game)GetParent();
         sprite = (AnimatedSprite2D)GetNode("Sprite");
@@ -22,7 +26,21 @@ public partial class Inky : Ghost
     }
 
 	private void StateLogic(double delta) {
+		targetPos = SetTargetTile();
+		switch(currentState) {
+			case states.SEEK:
+				
+				break;
+		}
 
+		if(forceReverse) {
+			direction = -direction;
+			forceReverse = false;
+		}
+
+		if(currentState != states.INIT) Position += (Vector2)direction * (speed * speedMod) * (float)delta;
+		Wrap();
+		gridPos = GetGridPosition(Position);
 	}
 
 	private states GetTransition(double delta) {
@@ -30,13 +48,45 @@ public partial class Inky : Ghost
 			case states.INIT:
 				if(g.currentState == Game.states.SCATTER) return states.SEEK;
 				break;
+			
+			case states.SEEK:
+			case states.SCARED:
+			case states.EATEN:
+				if(TileCenter() && gridPos != oldPos) return states.CHOOSEDIR;
+				break;
+			
+			case states.CHOOSEDIR:
+				if(direction != Vector2I.Zero) return previousState;
+				break;
 		}
 
 		return states.NULL;
 	}
 
 	private void EnterState(states newState, states oldState) {
-
+		switch(newState) {
+			case states.INIT:
+				basePalette = 0;
+				SetPalette(basePalette);
+				direction = Vector2I.Left;
+				desiredDir = Vector2I.Left;
+				break;
+			
+			case states.CHOOSEDIR:
+				AlignToGrid(gridPos);
+				
+				switch(g.scaredMode) {
+					case true:
+						direction = ChooseRandomDir();
+						break;
+					
+					case false:
+						direction = ChooseShortestDir();
+						break;
+				}
+				PlayAnim(direction);
+				break;
+		}
 	}
 
 	private void ExitState(states oldState, states newState) {
@@ -47,12 +97,24 @@ public partial class Inky : Ghost
 		previousState = currentState;
 		currentState = newState;
 
+		//GD.Print(Name," has entered state ",currentState," from state ",previousState);
+
 		ExitState(previousState, currentState);
 		EnterState(currentState, previousState);
 	}
 
-	private Vector2 SetTargetTile() {
-		Vector2 targetTile = Vector2.Zero;
+	private Vector2I SetTargetTile() {
+		Vector2I targetTile = Vector2I.Zero;
+
+		switch(g.currentState) {
+			case Game.states.SCATTER:
+				targetTile = new Vector2I(25, 0);
+				break;
+			
+			case Game.states.CHASE:
+				targetTile = g.p.gridPos;
+				break;
+		}
 
 		return targetTile;
 	}
