@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Collections.Generic;
 
 public partial class Game : Node2D
 {
@@ -7,7 +8,7 @@ public partial class Game : Node2D
 	private TileMapLayer tml;
 	public PacMan p;
 
-	public enum states {NULL, INIT, SHOWTEXT, SHOWACTORS, SCATTER, CHASE, LOSE, WIN, NEXTLEVEL, GAMEOVER}
+	public enum states {NULL, INIT, SHOWTEXT, SHOWACTORS, SCATTER, CHASE, GHOSTEATEN, LOSE, WIN, NEXTLEVEL, GAMEOVER}
 	public states currentState = states.NULL;
 	private states previousState = states.NULL;
 
@@ -16,7 +17,7 @@ public partial class Game : Node2D
 	private int phase = 0;
 	private int dotEatSample = 0;
 	public int scaredTicks = 0;
-	private int dotsEaten = 0;
+	public int dotsEaten = 0;
 	private int bigDotsEaten = 0;
 	private int eatenGhosts = 0;
 	private int mazePalette = 0;
@@ -25,6 +26,8 @@ public partial class Game : Node2D
 	private bool eyesMode = false;
 
 	private Vector2I lastGridPos = Vector2I.Zero;
+
+	private List<Ghost> ghosts = new List<Ghost>();
 
 	public override void _Ready() {
 		m = (Master)GetNode("/root/Master");
@@ -78,18 +81,6 @@ public partial class Game : Node2D
 					scaredMode = false;
 					eyesMode = false;
 				}
-
-				/* // Frightened Mode
-				if(scaredTicks > 0 && !scaredMode) {
-					PlayLoop("fright");
-					scaredMode = true;
-				}
-
-				// Eyeballs Mode
-				if(eatenGhosts > 0 && !eyesMode) {
-					PlayLoop("eyes");
-					eyesMode = true;
-				} */
 
 				if(lastGridPos != p.gridPos) {
 					if(tml.GetCellSourceId(p.gridPos) == 0) {
@@ -197,6 +188,7 @@ public partial class Game : Node2D
 
 				for(int i = 0; i < GetTree().GetNodesInGroup("ghost").Count; i++) {
 					Ghost boo = (Ghost)GetTree().GetNodesInGroup("ghost")[i];
+					ghosts.Add(boo);
 					boo.Show();
 				}
 				break;
@@ -285,7 +277,7 @@ public partial class Game : Node2D
 		EnterState(currentState, previousState);
 	}
 
-	private void PlaySingle(string name) {
+	public void PlaySingle(string name) {
 		// This function will call a non-looping sound sample.
 		string path = "res://assets/audio/" + name + ".wav";
 		if(ResourceLoader.Exists(path)) {
@@ -376,10 +368,17 @@ public partial class Game : Node2D
 
 		// Add trigger to send Ghosts into frightened mode here.
 		if(scaredTicks == 0) {
-			for(int i = 0; i  < GetTree().GetNodesInGroup("ghost").Count; i++) {
+			/* for(int i = 0; i  < GetTree().GetNodesInGroup("ghost").Count; i++) {
 				Ghost gst = (Ghost)GetTree().GetNodesInGroup("ghost")[i];
 				gst.forceReverse = true;
 				if(gst.currentState == Ghost.states.SEEK) gst.PlayAnim(gst.direction);
+			} */
+
+			for(int i = 0; i < ghosts.Count; i++) {
+				if(ghosts[i].currentState == Ghost.states.SEEK) {
+					ghosts[i].forceReverse = true;
+					ghosts[i].PlayAnim(ghosts[i].direction);
+				}
 			}
 		}
 

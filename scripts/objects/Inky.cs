@@ -5,10 +5,8 @@ using System.Runtime.InteropServices;
 
 public partial class Inky : Ghost
 {
-	private bool cruiseElroyA = false;
-	private bool cruiseElroyB = false;
-
 	public override void _Ready() {
+		m = (Master)GetNode("/root/Master");
 		g = (Game)GetParent();
         sprite = (AnimatedSprite2D)GetNode("Sprite");
 
@@ -33,10 +31,7 @@ public partial class Inky : Ghost
 				break;
 		}
 
-		if(forceReverse) {
-			direction = -direction;
-			forceReverse = false;
-		}
+		speedMod = SpeedModifier();
 
 		if(currentState != states.INIT) Position += (Vector2)direction * (speed * speedMod) * (float)delta;
 		Wrap();
@@ -74,16 +69,24 @@ public partial class Inky : Ghost
 			
 			case states.CHOOSEDIR:
 				AlignToGrid(gridPos);
+				Vector2I saveDir = direction;
+				saveDir = -saveDir;
 				
-				switch(g.scaredMode) {
-					case true:
-						direction = ChooseRandomDir();
-						break;
-					
-					case false:
-						direction = ChooseShortestDir();
-						break;
+				if(!forceReverse) {
+					switch(g.scaredMode) {
+						case true:
+							direction = ChooseRandomDir();
+							break;
+						
+						case false:
+							direction = ChooseShortestDir();
+							break;
+					}
+				} else {
+					direction = saveDir;
+					forceReverse = false;
 				}
+				
 				PlayAnim(direction);
 				break;
 		}

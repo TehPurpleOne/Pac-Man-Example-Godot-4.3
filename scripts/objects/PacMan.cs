@@ -109,6 +109,7 @@ public partial class PacMan : Node2D
 	private float SpeedModifier() {
 		float newMod = 0;
 
+		// Base speeds.
 		switch(m.level) {
 			case 1:
 				if(g.scaredTicks == 0) newMod = 0.80f; else newMod = 0.90f;
