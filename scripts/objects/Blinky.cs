@@ -4,9 +4,14 @@ using System;
 public partial class Blinky : Ghost
 {
 	public override void _Ready() {
+		m = (Master)GetNode("/root/Master");
 		g = (Game)GetParent();
         sprite = (AnimatedSprite2D)GetNode("Sprite");
 
-		//SetState(states.INIT);
+		basePalette = 0;
+		direction = Vector2I.Left;
+		desiredDir = Vector2I.Left;
+
+		SetState(states.INIT);
 	}
 }

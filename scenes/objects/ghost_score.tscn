@@ -1,0 +1,12 @@
+[gd_scene load_steps=3 format=3 uid="uid://csb1epioresdb"]
+
+[ext_resource type="Texture2D" uid="uid://bdjgcf0wfwwys" path="res://assets/sprites/ghostScore.png" id="1_1ua7a"]
+[ext_resource type="Script" path="res://scripts/objects/GhostScore.cs" id="1_12cwv"]
+
+[node name="GhostScore" type="Node2D"]
+process_mode = 3
+script = ExtResource("1_12cwv")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("1_1ua7a")
+hframes = 4

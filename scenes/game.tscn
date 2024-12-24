@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=4 uid="uid://bib5kf4aecbfd"]
+[gd_scene load_steps=21 format=4 uid="uid://bib5kf4aecbfd"]
 
 [ext_resource type="Script" path="res://scripts/Game.cs" id="1_rcpbo"]
 [ext_resource type="Shader" path="res://assets/shader/palette.gdshader" id="2_mbe48"]
@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" uid="uid://c6slnf4rxcpb7" path="res://assets/tiles/tilepal.png" id="4_hiwyc"]
 [ext_resource type="PackedScene" uid="uid://bjx1nq1pof33c" path="res://scenes/objects/fruit.tscn" id="6_i3bqt"]
 [ext_resource type="PackedScene" uid="uid://dnj5v7wrqju3h" path="res://scenes/objects/pac_man.tscn" id="6_ow0xe"]
+[ext_resource type="PackedScene" uid="uid://csb1epioresdb" path="res://scenes/objects/ghost_score.tscn" id="6_xxvfi"]
 [ext_resource type="PackedScene" uid="uid://0fk1vhyh81fp" path="res://scenes/objects/inky.tscn" id="7_m1ptb"]
 [ext_resource type="Texture2D" uid="uid://di17j8e3tc4xg" path="res://assets/sprites/ghost_palette.png" id="8_j4uda"]
 [ext_resource type="PackedScene" uid="uid://dwrl7oeqd0oh7" path="res://scenes/objects/pinky.tscn" id="9_tpd7g"]
@@ -114,11 +115,18 @@ custom_data_layer_2/name = "wall"
 custom_data_layer_2/type = 1
 sources/0 = SubResource("TileSetAtlasSource_36guq")
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_4wp0p"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_6ogjk"]
 resource_local_to_scene = true
 shader = ExtResource("2_mbe48")
 shader_parameter/palette_count = 7.0
 shader_parameter/palette_index = 0.0
+shader_parameter/palette = ExtResource("8_j4uda")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_4wp0p"]
+resource_local_to_scene = true
+shader = ExtResource("2_mbe48")
+shader_parameter/palette_count = 7.0
+shader_parameter/palette_index = 2.0
 shader_parameter/palette = ExtResource("8_j4uda")
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_b6bj4"]
@@ -126,13 +134,6 @@ resource_local_to_scene = true
 shader = ExtResource("2_mbe48")
 shader_parameter/palette_count = 7.0
 shader_parameter/palette_index = 1.0
-shader_parameter/palette = ExtResource("8_j4uda")
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_6ogjk"]
-resource_local_to_scene = true
-shader = ExtResource("2_mbe48")
-shader_parameter/palette_count = 7.0
-shader_parameter/palette_index = 2.0
 shader_parameter/palette = ExtResource("8_j4uda")
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_2404k"]
@@ -261,6 +262,9 @@ theme_override_font_sizes/font_size = 8
 text = "GAME  OVER"
 horizontal_alignment = 2
 
+[node name="GhostScore" parent="." instance=ExtResource("6_xxvfi")]
+visible = false
+
 [node name="Fruit" parent="." instance=ExtResource("6_i3bqt")]
 visible = false
 position = Vector2(112, 164)
@@ -270,23 +274,23 @@ process_mode = 1
 visible = false
 position = Vector2(112, 212)
 
+[node name="Blinky" parent="." instance=ExtResource("10_02ij2")]
+process_mode = 1
+visible = false
+material = SubResource("ShaderMaterial_6ogjk")
+position = Vector2(112, 116)
+
 [node name="Inky" parent="." instance=ExtResource("7_m1ptb")]
 process_mode = 1
 visible = false
 material = SubResource("ShaderMaterial_4wp0p")
-position = Vector2(112, 116)
+position = Vector2(96, 140)
 
 [node name="Pinky" parent="." instance=ExtResource("9_tpd7g")]
 process_mode = 1
 visible = false
 material = SubResource("ShaderMaterial_b6bj4")
 position = Vector2(112, 140)
-
-[node name="Blinky" parent="." instance=ExtResource("10_02ij2")]
-process_mode = 1
-visible = false
-material = SubResource("ShaderMaterial_6ogjk")
-position = Vector2(96, 140)
 
 [node name="Clyde" parent="." instance=ExtResource("11_ups55")]
 process_mode = 1

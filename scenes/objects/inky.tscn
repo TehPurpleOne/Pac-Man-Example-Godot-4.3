@@ -9,7 +9,7 @@
 resource_local_to_scene = true
 shader = ExtResource("1_nl34g")
 shader_parameter/palette_count = 7.0
-shader_parameter/palette_index = 0.0
+shader_parameter/palette_index = 2.0
 shader_parameter/palette = ExtResource("2_fqmw6")
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_ciffu"]

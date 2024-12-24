@@ -21,6 +21,7 @@ public partial class Game : Node2D
 	private int bigDotsEaten = 0;
 	private int eatenGhosts = 0;
 	private int mazePalette = 0;
+	private int[] saveTicks = new int[] {0, 0};
 
 	public bool scaredMode = true;
 	private bool eyesMode = false;
@@ -92,9 +93,6 @@ public partial class Game : Node2D
 
 							if(smallDot) {
 								p.moveDelay = 1; // Delay Pac-Man by a single frame.
-								dotEatSample++;
-								if(dotEatSample > 1) dotEatSample = 0;
-
 							} else {
 								p.moveDelay = 3;
 								bigDotsEaten++;
@@ -102,6 +100,8 @@ public partial class Game : Node2D
 							}
 							// Fun fact, the eating noises actually alternate between two samples in the arcade original. This is recreated here.
 							PlaySingle("eat_dot_" + dotEatSample.ToString());
+							dotEatSample++;
+							if(dotEatSample > 1) dotEatSample = 0;
 							dotsEaten++;
 						}
 					}
@@ -157,6 +157,10 @@ public partial class Game : Node2D
 			case states.CHASE:
 				if(ticks == ticksToNext) return states.SCATTER;
 				if(dotsEaten == 244) return states.WIN;
+				break;
+			
+			case states.GHOSTEATEN:
+				if(ticks == 45) return previousState;
 				break;
 			
 			case states.WIN:
@@ -230,6 +234,24 @@ public partial class Game : Node2D
 				phase++;
 				break;
 			
+			case states.GHOSTEATEN:
+				GhostScore gs = (GhostScore)GetNode("GhostScore");
+
+				PlaySingle("eat_ghost");
+
+				saveTicks[0] = ticks;
+				saveTicks[1] = scaredTicks;
+
+				eatenGhosts++;
+
+				gs.s.Frame = eatenGhosts - 1;
+				gs.Position = p.Position;
+				gs.Show();
+
+				GetTree().Paused = true;
+
+				break;
+			
 			case states.WIN:
 				GetTree().Paused = true;
 				break;
@@ -256,16 +278,30 @@ public partial class Game : Node2D
 			case states.SCATTER:
 			case states.CHASE:
 				if(scaredTicks == 0) {
-					for(int i = 0; i  < GetTree().GetNodesInGroup("ghost").Count; i++) {
-						Ghost gst = (Ghost)GetTree().GetNodesInGroup("ghost")[i];
-						gst.forceReverse = true;
+					for(int i = 0; i < ghosts.Count; i++) {
+						ghosts[i].forceReverse = true;
+					}
+				}
+				break;
+			
+			case states.GHOSTEATEN:
+				PlayLoop("eyes");
+				ticks = saveTicks[0];
+				scaredTicks = saveTicks[1];
+				GetTree().Paused = false;
+				p.Show();
+
+				for(int i = 0; i < ghosts.Count; i++) {
+					if(!ghosts[i].Visible) {
+						ghosts[i].SetState(Ghost.states.EATEN);
+						ghosts[i].Show();
 					}
 				}
 				break;
 		}
 	}
 
-	private void SetState(states newState) {
+	public void SetState(states newState) {
 		previousState = currentState;
 		currentState = newState;
 
@@ -368,16 +404,9 @@ public partial class Game : Node2D
 
 		// Add trigger to send Ghosts into frightened mode here.
 		if(scaredTicks == 0) {
-			/* for(int i = 0; i  < GetTree().GetNodesInGroup("ghost").Count; i++) {
-				Ghost gst = (Ghost)GetTree().GetNodesInGroup("ghost")[i];
-				gst.forceReverse = true;
-				if(gst.currentState == Ghost.states.SEEK) gst.PlayAnim(gst.direction);
-			} */
-
 			for(int i = 0; i < ghosts.Count; i++) {
 				if(ghosts[i].currentState == Ghost.states.SEEK) {
-					ghosts[i].forceReverse = true;
-					ghosts[i].PlayAnim(ghosts[i].direction);
+					ghosts[i].SetState(Ghost.states.SCARED);
 				}
 			}
 		}

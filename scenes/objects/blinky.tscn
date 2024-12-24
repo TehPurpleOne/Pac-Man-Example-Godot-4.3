@@ -5,11 +5,11 @@
 [ext_resource type="Texture2D" uid="uid://dio15asdc0k07" path="res://assets/sprites/ghost_gray.png" id="3_8h0lm"]
 [ext_resource type="Script" path="res://scripts/objects/Blinky.cs" id="3_354ry"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_6uruc"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_cwqhg"]
 resource_local_to_scene = true
 shader = ExtResource("1_3egqh")
 shader_parameter/palette_count = 7.0
-shader_parameter/palette_index = 2.0
+shader_parameter/palette_index = 0.0
 shader_parameter/palette = ExtResource("2_8symf")
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_ciffu"]
@@ -52,7 +52,7 @@ region = Rect2(64, 0, 16, 16)
 atlas = ExtResource("3_8h0lm")
 region = Rect2(80, 0, 16, 16)
 
-[sub_resource type="SpriteFrames" id="SpriteFrames_5ixp7"]
+[sub_resource type="SpriteFrames" id="SpriteFrames_tju4m"]
 animations = [{
 "frames": [{
 "duration": 1.0,
@@ -111,10 +111,10 @@ animations = [{
 }]
 
 [node name="Blinky" type="Node2D" groups=["ghost"]]
-material = SubResource("ShaderMaterial_6uruc")
+material = SubResource("ShaderMaterial_cwqhg")
 script = ExtResource("3_354ry")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
 use_parent_material = true
-sprite_frames = SubResource("SpriteFrames_5ixp7")
-animation = &"UP"
+sprite_frames = SubResource("SpriteFrames_tju4m")
+animation = &"LEFT"
