@@ -83,30 +83,6 @@ public partial class Ghost : Node2D
 				}
 				break;
 		}
-		
-		/* switch(currentState) {
-			case states.SCARED:
-				if(g.scaredTicks > 180) SetPalette(5);
-
-				if(g.scaredTicks <= 120 && g.scaredTicks % 5 == 0) {
-					int getCurrent = currentPalette;
-					getCurrent++;
-					if(getCurrent > 6) getCurrent = 5;
-					SetPalette(getCurrent);
-				}
-				break;
-			
-			case states.EATEN:
-				distToGhostHouse = Position.DistanceTo(gHouseEntryPnt);
-				break;
-		}
-
-		speedMod = SpeedModifier();
-
-		if(currentState != states.INIT) Position += (Vector2)direction * (speed * speedMod) * (float)delta;
-		Wrap();
-		gridPos = GetGridPosition(Position);
-		PositionCheck(); */
 	}
 
 	private states GetTransition(double delta) {
@@ -168,6 +144,7 @@ public partial class Ghost : Node2D
 				break;
 			
 			case states.EATEN:
+				g.eyesMode = true;
 				SetPalette(4);
 				PlayAnim(direction);
 				break;
@@ -188,34 +165,6 @@ public partial class Ghost : Node2D
 				direction = Vector2I.Up;
 				PlayAnim(direction);
 				break;
-			
-			/* case states.CHOOSEDIR:
-				AlignToGrid(gridPos);
-				Vector2I saveDir = direction;
-				saveDir = -saveDir;
-
-				switch(oldState) {
-					case states.SEEK:
-						direction = ChooseShortestDir();
-						break;
-					
-					case states.SCARED:
-						direction = ChooseRandomDir();
-						break;
-					
-					case states.EATEN:
-						if(forceReverse) forceReverse = false;
-						direction = ChooseShortestDir();
-						break;
-				}
-
-				if(forceReverse) {
-					direction = -saveDir;
-					forceReverse = false;
-				}
-				
-				PlayAnim(direction);
-				break; */
 		}
 	}
 

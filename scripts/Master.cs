@@ -45,9 +45,8 @@ public partial class Master : Node2D
 
 	public void PlayLoopSound(AudioStream name) {
 		// Check to see if a loop is already playing. If so, stop it and null the variable.
-		if(activeLoop != null && activeLoop.Playing) {
+		if(activeLoop != null) {
 			activeLoop.Stop();
-			activeLoop = null;
 		}
 
 		// Create a new AudioStreamPlayer for the loop.

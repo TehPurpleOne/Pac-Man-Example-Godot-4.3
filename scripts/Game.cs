@@ -24,7 +24,7 @@ public partial class Game : Node2D
 	private int[] saveTicks = new int[] {0, 0};
 
 	public bool scaredMode = true;
-	private bool eyesMode = false;
+	public bool eyesMode = false;
 
 	private Vector2I lastGridPos = Vector2I.Zero;
 
@@ -248,7 +248,12 @@ public partial class Game : Node2D
 				gs.Position = p.Position;
 				gs.Show();
 
-				GetTree().Paused = true;
+				p.SetPhysicsProcess(false);
+				for(int i = 0; i < ghosts.Count; i++) {
+					ghosts[i].SetPhysicsProcess(false);
+				}
+
+				//GetTree().Paused = true;
 
 				break;
 			
@@ -288,14 +293,15 @@ public partial class Game : Node2D
 				PlayLoop("eyes");
 				ticks = saveTicks[0];
 				scaredTicks = saveTicks[1];
-				GetTree().Paused = false;
 				p.Show();
+				p.SetPhysicsProcess(true);
 
 				for(int i = 0; i < ghosts.Count; i++) {
 					if(!ghosts[i].Visible) {
 						ghosts[i].SetState(Ghost.states.EATEN);
 						ghosts[i].Show();
 					}
+					ghosts[i].SetPhysicsProcess(true);
 				}
 				break;
 		}
@@ -403,11 +409,9 @@ public partial class Game : Node2D
 		}
 
 		// Add trigger to send Ghosts into frightened mode here.
-		if(scaredTicks == 0) {
-			for(int i = 0; i < ghosts.Count; i++) {
-				if(ghosts[i].currentState == Ghost.states.SEEK) {
-					ghosts[i].SetState(Ghost.states.SCARED);
-				}
+		for(int i = 0; i < ghosts.Count; i++) {
+			if(ghosts[i].currentState == Ghost.states.SEEK) {
+				ghosts[i].SetState(Ghost.states.SCARED);
 			}
 		}
 
