@@ -1,4 +1,4 @@
 # Redot 4+ specific ignores
 .godot/
+.vscode/
 /android/
-.json
