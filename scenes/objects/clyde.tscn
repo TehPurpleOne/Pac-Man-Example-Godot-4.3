@@ -115,6 +115,7 @@ material = SubResource("ShaderMaterial_iqkuk")
 script = ExtResource("3_0wxij")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
+visible = false
 use_parent_material = true
 sprite_frames = SubResource("SpriteFrames_a3ner")
 animation = &"UP"

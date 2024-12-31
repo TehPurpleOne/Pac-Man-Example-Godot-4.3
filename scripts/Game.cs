@@ -19,7 +19,7 @@ public partial class Game : Node2D
 	public int scaredTicks = 0;
 	public int dotsEaten = 0;
 	private int bigDotsEaten = 0;
-	private int eatenGhosts = 0;
+	public int eatenGhosts = 0;
 	private int mazePalette = 0;
 	private int[] saveTicks = new int[] {0, 0};
 

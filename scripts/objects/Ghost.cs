@@ -19,12 +19,15 @@ public partial class Ghost : Node2D
 	public Vector2I gridPos = Vector2I.Zero;
 	public Vector2I oldPos = Vector2I.Zero;
 	public Vector2I targetPos = Vector2I.Zero;
+	public Vector2I gHouseEntryPnt = new Vector2I(112, 116);
+	public float distToGhostHouse = 0;
+	public int dotsToExit = 0;
 	public int moveDelay = 0;
 	public int basePalette = 0;
 	public int currentPalette = 0;
 	public bool forceReverse = false;
 
-	public enum states {NULL, INIT, HOME, EXIT, SEEK, SCARED, EATEN, ENTER, CHOOSEDIR}
+	public enum states {NULL, INIT, HOME, EXIT, SEEK, SCARED, EATEN, ENTER}
 	public states currentState = states.NULL;
 	public states previousState = states.NULL;
 
@@ -39,8 +42,49 @@ public partial class Ghost : Node2D
     }
 
 	private void StateLogic(double delta) {
-		targetPos = SetTargetTile();
+		if(currentState == states.SCARED) { // Used to make the ghosts flash.
+			if(g.scaredTicks > 180) SetPalette(5);
+
+			if(g.scaredTicks <= 120 && g.scaredTicks % 5 == 0) {
+				int getCurrent = currentPalette;
+				getCurrent++;
+				if(getCurrent > 6) getCurrent = 5;
+				SetPalette(getCurrent);
+			}
+		}
+
+		targetPos = SetTargetTile(); // Get the current target tile.
+		speedMod = SpeedModifier(); // Set the speed modifier
+		if(currentState != states.INIT) Position += (Vector2)direction * (speed * speedMod) * (float)delta; // Move the ghost as needed.
+		Wrap(); // Wrap the ghost along the play field.
+		gridPos = GetGridPosition(Position); // Update grid position
+		PositionCheck(); // Check to see if the ghost is overlapping the player.
+
 		switch(currentState) {
+			case states.SEEK:
+			case states.SCARED:
+			case states.EATEN:
+				if(TileCenter() && oldPos != gridPos) { // Ghost is close to the center of a tile.
+					AlignToGrid(gridPos); // Align the ghost to the grid in the center of the tile.
+					Vector2I reverse = -direction; // Save the reversed direction;
+					Vector2I oldDirection = direction;
+
+					if(currentState == states.SCARED) direction = ChooseRandomDir(); else direction = ChooseShortestDir();
+
+					if(forceReverse && currentState != states.EATEN) {
+						direction = reverse;
+						forceReverse = false;
+					}
+
+					if(direction != oldDirection && currentState != states.SCARED) {
+						PlayAnim(direction);
+					}
+					oldPos = gridPos;
+				}
+				break;
+		}
+		
+		/* switch(currentState) {
 			case states.SCARED:
 				if(g.scaredTicks > 180) SetPalette(5);
 
@@ -51,6 +95,10 @@ public partial class Ghost : Node2D
 					SetPalette(getCurrent);
 				}
 				break;
+			
+			case states.EATEN:
+				distToGhostHouse = Position.DistanceTo(gHouseEntryPnt);
+				break;
 		}
 
 		speedMod = SpeedModifier();
@@ -58,7 +106,7 @@ public partial class Ghost : Node2D
 		if(currentState != states.INIT) Position += (Vector2)direction * (speed * speedMod) * (float)delta;
 		Wrap();
 		gridPos = GetGridPosition(Position);
-		PositionCheck();
+		PositionCheck(); */
 	}
 
 	private states GetTransition(double delta) {
@@ -67,16 +115,37 @@ public partial class Ghost : Node2D
 				if(g.currentState == Game.states.SCATTER) return states.SEEK;
 				break;
 			
-			case states.SEEK:
+			case states.SCARED:
+				if(g.scaredTicks == 0) return states.SEEK;
+				break;
+			
+			case states.EATEN:
+				if(distToGhostHouse <= 1.5) return states.ENTER;
+				break;
+			
+			/* case states.SEEK:
 			case states.SCARED:
 			case states.EATEN:
 				if(currentState == states.SCARED && g.scaredTicks == 0) return states.SEEK;
+				if(currentState == states.EATEN && distToGhostHouse <= 1) return states.ENTER;
 				if(TileCenter() && gridPos != oldPos) return states.CHOOSEDIR;
+				break; */
+			
+			case states.ENTER:
+				if(Position.Y >= 144) return states.HOME;
 				break;
 			
-			case states.CHOOSEDIR:
-				if(direction != Vector2I.Zero) return previousState;
+			case states.HOME:
+				if(dotsToExit == 0) return states.EXIT;
 				break;
+			
+			case states.EXIT:
+				if(Position.Y <= 116) return states.SEEK;
+				break;
+			
+			/* case states.CHOOSEDIR:
+				if(direction != Vector2I.Zero) return previousState;
+				break; */
 		}
 
 		return states.NULL;
@@ -90,17 +159,37 @@ public partial class Ghost : Node2D
 			
 			case states.SEEK:
 				SetPalette(-1);
+				PlayAnim(direction);
 				break;
 				
 			case states.SCARED:
-				if(sprite.Animation != "SCARED") sprite.Play("SCARED");
+				forceReverse = true;
+				sprite.Play("SCARED");
 				break;
 			
 			case states.EATEN:
 				SetPalette(4);
+				PlayAnim(direction);
 				break;
 			
-			case states.CHOOSEDIR:
+			case states.ENTER:
+				Position = new Vector2I(112, 116);
+				direction = Vector2I.Down;
+				PlayAnim(direction);
+				break;
+
+			case states.HOME:
+				g.eatenGhosts--;
+				break;
+			
+			case states.EXIT:
+				SetPalette(-1);
+				Position = new Vector2I(112, 144);
+				direction = Vector2I.Up;
+				PlayAnim(direction);
+				break;
+			
+			/* case states.CHOOSEDIR:
 				AlignToGrid(gridPos);
 				Vector2I saveDir = direction;
 				saveDir = -saveDir;
@@ -126,19 +215,26 @@ public partial class Ghost : Node2D
 				}
 				
 				PlayAnim(direction);
-				break;
+				break; */
 		}
 	}
 
 	private void ExitState(states oldState, states newState) {
-
+		switch(oldState) {
+			case states.EXIT:
+				// Always send the ghosts to the left.
+				Position = new Vector2I(112, 116);
+				direction = Vector2I.Left;
+				PlayAnim(direction);
+				break;
+		}
 	}
 
 	public void SetState(states newState) {
 		previousState = currentState;
 		currentState = newState;
 
-		//GD.Print(Name," has entered state ",currentState," from state ",previousState);
+		//GD.Print(Name," has entered state ",currentState," from state ",previousState," seeking target ",targetPos);
 
 		ExitState(previousState, currentState);
 		EnterState(currentState, previousState);
@@ -208,7 +304,7 @@ public partial class Ghost : Node2D
 	public bool TileCenter() {
 		Vector2I currentTile = GetGridPosition(Position);
 		Vector2 tileCenter = new Vector2(currentTile.X * 8 + 4, currentTile.Y * 8 + 4);
-		float margin = 0.75f;
+		float margin = 1.0f;
 
 		return Mathf.Abs(Position.X - tileCenter.X) < margin && Mathf.Abs(Position.Y - tileCenter.Y) < margin;
 	}
@@ -225,16 +321,13 @@ public partial class Ghost : Node2D
 	public Vector2I ChooseShortestDir() {
 		Vector2I newDir = Vector2I.Zero;
 
-		// Choose direction that's the shortest distance between ghost and target tile.
-		AlignToGrid(gridPos);
-
 		// Add possible directions to a list.
 		List<Vector2I> dirs = new List<Vector2I> ();
 		Vector2I reverse = -direction;
 		bool upAllowed = gridPos + Vector2I.Up != new Vector2I(12, 13)
-					  || gridPos + Vector2I.Up != new Vector2I(15, 13)
-					  || gridPos + Vector2I.Up != new Vector2I(12, 25)
-					  || gridPos + Vector2I.Up != new Vector2I(15, 25);
+					  && gridPos + Vector2I.Up != new Vector2I(15, 13)
+					  && gridPos + Vector2I.Up != new Vector2I(12, 25)
+					  && gridPos + Vector2I.Up != new Vector2I(15, 25);
 
 		// Check up
 		if(g.IsDirectionValid(gridPos, Vector2I.Up) && upAllowed && reverse != Vector2I.Up) dirs.Add(Vector2I.Up);
@@ -277,9 +370,6 @@ public partial class Ghost : Node2D
 		Vector2I newDir = Vector2I.Zero;
 		Random RNGesus = new Random();
 
-		 // Choose a direction randomly from available directions.
-		AlignToGrid(gridPos);
-
 		// Add possible directions to a list.
 		List<Vector2I> dirs = new List<Vector2I> ();
 		if(g.IsDirectionValid(gridPos, Vector2I.Up)) dirs.Add(Vector2I.Up);
@@ -301,24 +391,22 @@ public partial class Ghost : Node2D
 		string oldAnim = sprite.Animation;
 		string newAnim = oldAnim;
 
-		if(oldAnim != "SCARED" || oldAnim == "SCARED" && previousState != states.SCARED) {
-			switch(dir) {
-				case Vector2I v when dir == Vector2I.Up:
-					newAnim = "UP";
-					break;
-				
-				case Vector2I v when dir == Vector2I.Down:
-					newAnim = "DOWN";
-					break;
-				
-				case Vector2I v when dir == Vector2I.Left:
-					newAnim = "LEFT";
-					break;
-				
-				case Vector2I v when dir == Vector2I.Right:
-					newAnim = "RIGHT";
-					break;
-			}
+		switch(dir) {
+			case Vector2I v when dir == Vector2I.Up:
+				newAnim = "UP";
+				break;
+			
+			case Vector2I v when dir == Vector2I.Down:
+				newAnim = "DOWN";
+				break;
+			
+			case Vector2I v when dir == Vector2I.Left:
+				newAnim = "LEFT";
+				break;
+			
+			case Vector2I v when dir == Vector2I.Right:
+				newAnim = "RIGHT";
+				break;
 		}
 
 		if(newAnim != oldAnim) sprite.Play(newAnim);
@@ -397,7 +485,7 @@ public partial class Ghost : Node2D
 		}
 
 		// Set frightened speeds.
-		if(g.scaredMode) {
+		if(currentState == states.SCARED) {
 			switch(m.level) {
 				case 1:
 					newMod = 0.5f;
@@ -456,5 +544,7 @@ public partial class Ghost : Node2D
 					break;
 			}
 		}
+
+		distToGhostHouse = Position.DistanceTo(gHouseEntryPnt);
 	}
 }
