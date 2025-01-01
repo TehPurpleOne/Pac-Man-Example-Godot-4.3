@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=4 uid="uid://bib5kf4aecbfd"]
+[gd_scene load_steps=22 format=4 uid="uid://bib5kf4aecbfd"]
 
 [ext_resource type="Script" path="res://scripts/Game.cs" id="1_rcpbo"]
 [ext_resource type="Shader" path="res://assets/shader/palette.gdshader" id="2_mbe48"]
@@ -13,6 +13,7 @@
 [ext_resource type="PackedScene" uid="uid://dwrl7oeqd0oh7" path="res://scenes/objects/pinky.tscn" id="9_tpd7g"]
 [ext_resource type="PackedScene" uid="uid://cx7kj24lx2emw" path="res://scenes/objects/blinky.tscn" id="10_02ij2"]
 [ext_resource type="PackedScene" uid="uid://jx0xrqdrraps" path="res://scenes/objects/clyde.tscn" id="11_ups55"]
+[ext_resource type="Texture2D" uid="uid://b3qapmk1pv0k0" path="res://assets/sprites/targets.png" id="14_es3n4"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_yn6i5"]
 resource_local_to_scene = true
@@ -304,3 +305,26 @@ anchors_preset = 0
 offset_right = 224.0
 offset_bottom = 288.0
 metadata/_edit_lock_ = true
+
+[node name="BlinkyTarget" type="Sprite2D" parent="Targets" groups=["target"]]
+position = Vector2(-8, -8)
+texture = ExtResource("14_es3n4")
+hframes = 4
+
+[node name="InkyTarget" type="Sprite2D" parent="Targets" groups=["target"]]
+position = Vector2(-8, -8)
+texture = ExtResource("14_es3n4")
+hframes = 4
+frame = 2
+
+[node name="PinkyTarget" type="Sprite2D" parent="Targets" groups=["target"]]
+position = Vector2(-8, -8)
+texture = ExtResource("14_es3n4")
+hframes = 4
+frame = 1
+
+[node name="ClydeTarget" type="Sprite2D" parent="Targets" groups=["target"]]
+position = Vector2(-8, -8)
+texture = ExtResource("14_es3n4")
+hframes = 4
+frame = 3

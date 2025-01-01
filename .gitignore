@@ -3,3 +3,5 @@
 .vscode/
 /android/
 .vscode/launch.json
+/.vscode
+*.json

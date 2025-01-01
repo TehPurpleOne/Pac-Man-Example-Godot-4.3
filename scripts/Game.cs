@@ -29,6 +29,7 @@ public partial class Game : Node2D
 	private Vector2I lastGridPos = Vector2I.Zero;
 
 	private List<Ghost> ghosts = new List<Ghost>();
+	private List<Sprite2D> ghostTargets = new List<Sprite2D>();
 
 	public override void _Ready() {
 		m = (Master)GetNode("/root/Master");
@@ -37,6 +38,31 @@ public partial class Game : Node2D
 
 		SetState(states.INIT);
 	}
+
+    public override void _Draw() {
+        for(int i = 0; i < ghostTargets.Count; i++) {
+			Color c = new Color();
+			switch(i) {
+				case 0:
+					c = new Color("#ff0000");
+					break;
+				case 1:
+					c = new Color("#00ffff");
+					break;
+				case 2:
+					c = new Color("#ffb7ff");
+					break;
+				case 3:
+					c = new Color("#ffb751");
+					break;
+			}
+			DrawLine(ghostTargets[i].Position, ghosts[i].Position, c, 1.0f);
+		}
+    }
+
+    public override void _Process(double delta) {
+        QueueRedraw();
+    }
 
     public override void _PhysicsProcess(double delta) {
         if(currentState != states.NULL) {
@@ -51,6 +77,8 @@ public partial class Game : Node2D
 	private void StateLogic(double delta) {
 		ticks++; // Ticks will always count up regardless of the current state. Use for timing of events.
 		if(scaredTicks > 0) scaredTicks--;
+
+		UpdateTargetTiles();
 
 		switch(currentState) {
 			case states.SCATTER:
@@ -193,7 +221,15 @@ public partial class Game : Node2D
 				for(int i = 0; i < GetTree().GetNodesInGroup("ghost").Count; i++) {
 					Ghost boo = (Ghost)GetTree().GetNodesInGroup("ghost")[i];
 					ghosts.Add(boo);
+
+					if(i == 0) boo.followGhost = ghosts[0]; else boo.followGhost = ghosts[i - 1];
+
 					boo.Show();
+				}
+
+				for(int i = 0; i < GetTree().GetNodesInGroup("target").Count; i++) {
+					Sprite2D target = (Sprite2D)GetTree().GetNodesInGroup("target")[i];
+					ghostTargets.Add(target);
 				}
 				break;
 
@@ -420,5 +456,11 @@ public partial class Game : Node2D
 		}
 
 		return newValue;
+	}
+
+	private void UpdateTargetTiles() {
+		for(int i = 0; i < ghostTargets.Count; i++) {
+			ghostTargets[i].Position = tml.MapToLocal(ghosts[i].targetPos);
+		}
 	}
 }

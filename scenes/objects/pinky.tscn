@@ -115,7 +115,6 @@ material = SubResource("ShaderMaterial_u5gqx")
 script = ExtResource("3_l5ogx")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
-visible = false
 use_parent_material = true
 sprite_frames = SubResource("SpriteFrames_yg32e")
 animation = &"DOWN"

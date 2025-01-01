@@ -6,6 +6,7 @@ public partial class Master : Node2D
 {
 	private AudioStreamPlayer activeLoop;
 	private List<AudioStreamPlayer> activeSingles = new List<AudioStreamPlayer>();
+	public List<Vector2I> eatenDotCoords = new List<Vector2I>();
 
 	public int level = 1;
 	public int players = 1;

@@ -10,6 +10,7 @@ public partial class Ghost : Node2D
 	public AnimatedSprite2D sprite;
 	public Master m;
 	public Game g;
+	public Ghost followGhost;
 
 	[Export] public float speed = 75.75757625f;
 	public float speedMod = 1;
@@ -99,14 +100,6 @@ public partial class Ghost : Node2D
 				if(distToGhostHouse <= 1.5) return states.ENTER;
 				break;
 			
-			/* case states.SEEK:
-			case states.SCARED:
-			case states.EATEN:
-				if(currentState == states.SCARED && g.scaredTicks == 0) return states.SEEK;
-				if(currentState == states.EATEN && distToGhostHouse <= 1) return states.ENTER;
-				if(TileCenter() && gridPos != oldPos) return states.CHOOSEDIR;
-				break; */
-			
 			case states.ENTER:
 				if(Position.Y >= 144) return states.HOME;
 				break;
@@ -118,10 +111,6 @@ public partial class Ghost : Node2D
 			case states.EXIT:
 				if(Position.Y <= 116) return states.SEEK;
 				break;
-			
-			/* case states.CHOOSEDIR:
-				if(direction != Vector2I.Zero) return previousState;
-				break; */
 		}
 
 		return states.NULL;
