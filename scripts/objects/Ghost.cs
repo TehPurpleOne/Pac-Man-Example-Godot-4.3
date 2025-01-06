@@ -27,12 +27,66 @@ public partial class Ghost : Node2D
 	public int basePalette = 0;
 	public int currentPalette = 0;
 	public bool forceReverse = false;
+	public bool frightened = false;
+	public bool eaten = false;
 
-	public enum states {NULL, INIT, HOME, EXIT, SEEK, SCARED, EATEN, ENTER}
+	public enum states {NULL, INIT, HOME, EXIT, SEEK, ENTER}
 	public states currentState = states.NULL;
 	public states previousState = states.NULL;
 
-	public override void _PhysicsProcess(double delta) {
+    public override void _Process(double delta) {
+        // Set the appropriate palette.
+		if(!frightened && !eaten && currentPalette != basePalette) SetPalette(basePalette); // Set the base palette
+
+		if(frightened) { // Set the frightened palette and flash the ghosts when the timer is almost done.
+			switch(g.scaredTicks) {
+				case int v when g.scaredTicks > 180:
+					if(currentPalette != 5) SetPalette(5);
+					break;
+				
+				case int v when g.scaredTicks <= 120:
+					if(g.scaredTicks % 5 == 0) {
+						int getCurrent = currentPalette;
+						getCurrent++;
+						if(getCurrent > 6) getCurrent = 5;
+						SetPalette(getCurrent);
+					}
+					break;
+			}
+		}
+
+		if(eaten && currentPalette != 4) SetPalette(4); // Set the eaten palette.
+
+		// Set the appropriate animation.
+		string newAnim = "";
+
+		if(!frightened) { // Play the animation
+			switch(direction) {
+				case Vector2I v when direction == Vector2I.Up:
+					newAnim = "UP";
+					break;
+				
+				case Vector2I v when direction == Vector2I.Down:
+					newAnim = "DOWN";
+					break;
+				
+				case Vector2I v when direction == Vector2I.Left:
+					newAnim = "LEFT";
+					break;
+				
+				case Vector2I v when direction == Vector2I.Right:
+					newAnim = "RIGHT";
+					break;
+			}
+		} else {
+			newAnim = "SCARED";
+		}
+
+		if(newAnim != sprite.Animation && newAnim != "") sprite.Play(newAnim);
+		if(!sprite.IsPlaying()) sprite.Play();
+    }
+
+    public override void _PhysicsProcess(double delta) {
 		if(currentState != states.NULL) {
 			StateLogic(delta);
 			states t = GetTransition(delta);
@@ -43,17 +97,6 @@ public partial class Ghost : Node2D
     }
 
 	private void StateLogic(double delta) {
-		if(currentState == states.SCARED) { // Used to make the ghosts flash.
-			if(g.scaredTicks > 180) SetPalette(5);
-
-			if(g.scaredTicks <= 120 && g.scaredTicks % 5 == 0) {
-				int getCurrent = currentPalette;
-				getCurrent++;
-				if(getCurrent > 6) getCurrent = 5;
-				SetPalette(getCurrent);
-			}
-		}
-
 		targetPos = SetTargetTile(); // Get the current target tile.
 		speedMod = SpeedModifier(); // Set the speed modifier
 		if(currentState != states.INIT) Position += (Vector2)direction * (speed * speedMod) * (float)delta; // Move the ghost as needed.
@@ -63,27 +106,29 @@ public partial class Ghost : Node2D
 
 		switch(currentState) {
 			case states.SEEK:
-			case states.SCARED:
-			case states.EATEN:
 				if(TileCenter() && oldPos != gridPos) { // Ghost is close to the center of a tile.
 					AlignToGrid(gridPos); // Align the ghost to the grid in the center of the tile.
 					Vector2I reverse = -direction; // Save the reversed direction;
 					Vector2I oldDirection = direction;
 
-					if(currentState == states.SCARED) direction = ChooseRandomDir(); else direction = ChooseShortestDir();
+					if(eaten && forceReverse) forceReverse = false;
 
-					if(forceReverse && currentState != states.EATEN) {
+					if(frightened) direction = ChooseRandomDir(); else direction = ChooseShortestDir();
+
+					if(forceReverse) {
 						direction = reverse;
 						forceReverse = false;
 					}
-
-					if(direction != oldDirection && currentState != states.SCARED) {
-						PlayAnim(direction);
-					}
+					
 					oldPos = gridPos;
 				}
 				break;
 		}
+
+		// If the scared ticks hit 0 and the ghost hasn't been eaten, set frightened flag to false.
+		// As a failsafe, if the eaten flag is true alongside frightened, disabled frighrned.
+		if(g.scaredTicks <= 0 && frightened
+		|| eaten && frightened) frightened = false;
 	}
 
 	private states GetTransition(double delta) {
@@ -92,12 +137,8 @@ public partial class Ghost : Node2D
 				if(g.currentState == Game.states.SCATTER) return states.SEEK;
 				break;
 			
-			case states.SCARED:
-				if(g.scaredTicks == 0) return states.SEEK;
-				break;
-			
-			case states.EATEN:
-				if(distToGhostHouse <= 1.5) return states.ENTER;
+			case states.SEEK:
+				if(distToGhostHouse <= 1.5 && eaten) return states.ENTER;
 				break;
 			
 			case states.ENTER:
@@ -127,7 +168,7 @@ public partial class Ghost : Node2D
 				PlayAnim(direction);
 				break;
 				
-			case states.SCARED:
+			/* case states.SCARED:
 				forceReverse = true;
 				sprite.Play("SCARED");
 				break;
@@ -136,12 +177,11 @@ public partial class Ghost : Node2D
 				g.eyesMode = true;
 				SetPalette(4);
 				PlayAnim(direction);
-				break;
+				break; */
 			
 			case states.ENTER:
 				Position = new Vector2I(112, 116);
 				direction = Vector2I.Down;
-				PlayAnim(direction);
 				break;
 
 			case states.HOME:
@@ -149,10 +189,9 @@ public partial class Ghost : Node2D
 				break;
 			
 			case states.EXIT:
-				SetPalette(-1);
+				eaten = false;
 				Position = new Vector2I(112, 144);
 				direction = Vector2I.Up;
-				PlayAnim(direction);
 				break;
 		}
 	}
@@ -223,7 +262,7 @@ public partial class Ghost : Node2D
 				break;
 		}
 
-		if(currentState == states.EATEN) targetTile = new Vector2I(13, 14);
+		if(eaten) targetTile = new Vector2I(13, 14);
 
 		return targetTile;
 	}
@@ -354,7 +393,7 @@ public partial class Ghost : Node2D
 
 	public float SpeedModifier() {
 		float newMod = 1;
-		int dotsRemaining = g.dotsEaten - 244;
+		int dotsRemaining = 244 - g.dotsEaten;
 
 		// Set the base speed for the ghost based on the level.
 		switch(m.level) {
@@ -371,8 +410,8 @@ public partial class Ghost : Node2D
 				break;
 		}
 
-		// For Inky only. Set modifier for Cruise Elroy speeds.
-		if(this.Name == "Inky") {
+		// For Blinky only. Set modifier for Cruise Elroy speeds.
+		if(this.Name == "Blinky") {
 			switch(m.level) {
 				case 1:
 					if(dotsRemaining <= 20 && dotsRemaining > 10) newMod = 0.8f; else if(dotsRemaining <= 10) newMod = 0.85f;
@@ -423,7 +462,7 @@ public partial class Ghost : Node2D
 		}
 
 		// Set frightened speeds.
-		if(currentState == states.SCARED) {
+		if(frightened) {
 			switch(m.level) {
 				case 1:
 					newMod = 0.5f;
@@ -463,19 +502,19 @@ public partial class Ghost : Node2D
 		}
 
 		// If eaten.
-		if(currentState == states.EATEN) newMod = 2f;
+		if(eaten) newMod = 2f;
 
 		return newMod;
 	}
 
 	public void PositionCheck() {
 		if(g.p.gridPos == gridPos) {
-			switch(currentState) {
-				case states.SEEK:
+			switch(frightened && !eaten) {
+				case false:
 					//g.SetState(Game.states.LOSE);
 					break;
 				
-				case states.SCARED:
+				case true:
 					g.p.Hide();
 					Hide();
 					g.SetState(Game.states.GHOSTEATEN);

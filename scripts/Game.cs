@@ -334,7 +334,7 @@ public partial class Game : Node2D
 
 				for(int i = 0; i < ghosts.Count; i++) {
 					if(!ghosts[i].Visible) {
-						ghosts[i].SetState(Ghost.states.EATEN);
+						ghosts[i].eaten = true;
 						ghosts[i].Show();
 					}
 					ghosts[i].SetPhysicsProcess(true);
@@ -447,7 +447,8 @@ public partial class Game : Node2D
 		// Add trigger to send Ghosts into frightened mode here.
 		for(int i = 0; i < ghosts.Count; i++) {
 			if(ghosts[i].currentState == Ghost.states.SEEK) {
-				ghosts[i].SetState(Ghost.states.SCARED);
+				ghosts[i].frightened = true;
+				ghosts[i].forceReverse = true;
 			}
 		}
 
