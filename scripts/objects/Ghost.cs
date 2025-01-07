@@ -10,7 +10,6 @@ public partial class Ghost : Node2D
 	public AnimatedSprite2D sprite;
 	public Master m;
 	public Game g;
-	public Ghost followGhost;
 
 	[Export] public float speed = 75.75757625f;
 	public float speedMod = 1;
@@ -26,9 +25,11 @@ public partial class Ghost : Node2D
 	public int moveDelay = 0;
 	public int basePalette = 0;
 	public int currentPalette = 0;
+	public int timeSinceLastDot = 0;
 	public bool forceReverse = false;
 	public bool frightened = false;
 	public bool eaten = false;
+	public bool inPlay = false;
 
 	public enum states {NULL, INIT, HOME, EXIT, SEEK, ENTER}
 	public states currentState = states.NULL;
@@ -44,13 +45,17 @@ public partial class Ghost : Node2D
 					if(currentPalette != 5) SetPalette(5);
 					break;
 				
-				case int v when g.scaredTicks <= 120:
+				case int v when g.scaredTicks <= 120 && g.scaredTicks > 0:
 					if(g.scaredTicks % 5 == 0) {
 						int getCurrent = currentPalette;
 						getCurrent++;
 						if(getCurrent > 6) getCurrent = 5;
 						SetPalette(getCurrent);
 					}
+					break;
+				
+				case 0:
+					frightened = false;
 					break;
 			}
 		}
@@ -105,6 +110,10 @@ public partial class Ghost : Node2D
 		PositionCheck(); // Check to see if the ghost is overlapping the player.
 
 		switch(currentState) {
+			case states.HOME:
+				if(Position.Y <= 136 || Position.Y >= 144) direction.Y = -direction.Y;
+				break;
+
 			case states.SEEK:
 				if(TileCenter() && oldPos != gridPos) { // Ghost is close to the center of a tile.
 					AlignToGrid(gridPos); // Align the ghost to the grid in the center of the tile.
@@ -132,11 +141,7 @@ public partial class Ghost : Node2D
 	}
 
 	private states GetTransition(double delta) {
-		switch(currentState) {
-			case states.INIT:
-				if(g.currentState == Game.states.SCATTER) return states.SEEK;
-				break;
-			
+		switch(currentState) {			
 			case states.SEEK:
 				if(distToGhostHouse <= 1.5 && eaten) return states.ENTER;
 				break;
@@ -146,7 +151,24 @@ public partial class Ghost : Node2D
 				break;
 			
 			case states.HOME:
-				if(dotsToExit == 0) return states.EXIT;
+				if(dotsToExit == 0) {
+					switch(Name) {
+						case "Blinky":
+							return states.EXIT;
+
+						case "Pinky":
+							if(g.ghostsInPlay > 0) return states.EXIT;
+							break;
+						
+						case "Inky":
+							if(g.ghostsInPlay > 1) return states.EXIT;
+							break;
+						
+						case "Clyde":
+							if(g.ghostsInPlay > 2) return states.EXIT;
+							break;
+					}
+				}
 				break;
 			
 			case states.EXIT:
@@ -159,26 +181,14 @@ public partial class Ghost : Node2D
 
 	private void EnterState(states newState, states oldState) {
 		switch(newState) {
-			case states.INIT:
-				SetPalette(basePalette);
-				break;
-			
 			case states.SEEK:
-				SetPalette(-1);
-				PlayAnim(direction);
+				if(!inPlay) {
+					g.ghostsInPlay++;
+					inPlay = true;
+				}
+				forceReverse = false;
 				break;
-				
-			/* case states.SCARED:
-				forceReverse = true;
-				sprite.Play("SCARED");
-				break;
-			
-			case states.EATEN:
-				g.eyesMode = true;
-				SetPalette(4);
-				PlayAnim(direction);
-				break; */
-			
+
 			case states.ENTER:
 				Position = new Vector2I(112, 116);
 				direction = Vector2I.Down;
@@ -186,10 +196,11 @@ public partial class Ghost : Node2D
 
 			case states.HOME:
 				g.eatenGhosts--;
+				if(g.eatenGhosts < 0) g.eatenGhosts = 0;
+				eaten = false;
 				break;
 			
 			case states.EXIT:
-				eaten = false;
 				Position = new Vector2I(112, 144);
 				direction = Vector2I.Up;
 				break;
@@ -227,16 +238,16 @@ public partial class Ghost : Node2D
 						targetTile = new Vector2I(25, 0);
 						break;
 					
-					case string t when Name == "Inky":
-						
+					case string t when Name == "Pinky":
+						targetTile = new Vector2I(2, 0);
 						break;
 					
-					case string t when Name == "Pinky":
-						
+					case string t when Name == "Inky":
+						targetTile = new Vector2I(27, 34);
 						break;
 					
 					case string t when Name == "Clyde":
-						
+						targetTile = new Vector2I(0, 34);
 						break;
 				}
 				break;
@@ -247,16 +258,53 @@ public partial class Ghost : Node2D
 						targetTile = g.p.gridPos;
 						break; 
 					
-					case string t when Name == "Inky":
-						
+					case string t when Name == "Pinky":
+						switch(g.p.ghostAIDir) {
+							case Vector2I v when g.p.ghostAIDir == Vector2I.Up:
+								targetTile = g.p.gridPos + new Vector2I(-4, -4); // Due to a glitch in the original game, Pinky's target tile when Pac-man is facing up is wildly off the mark. This is replicvated here.
+								break;
+							
+							case Vector2I v when g.p.ghostAIDir == Vector2I.Down:
+								targetTile = g.p.gridPos + new Vector2I(0, 4);
+								break;
+							
+							case Vector2I v when g.p.ghostAIDir == Vector2I.Left:
+								targetTile = g.p.gridPos + new Vector2I(-4, 0);
+								break;
+							
+							case Vector2I v when g.p.ghostAIDir == Vector2I.Right:
+								targetTile = g.p.gridPos + new Vector2I(4, 0);
+								break;
+						}
 						break;
 					
-					case string t when Name == "Pinky":
-						
+					case string t when Name == "Inky":
+						// This one is the most complicated of the bunch. First get the spcae 2 tiles ahead of pacman, including the bugged up direction.
+						Vector2I firstPhase = Vector2I.Zero;
+
+						switch(g.p.ghostAIDir) {
+							case Vector2I v when g.p.ghostAIDir == Vector2I.Up:
+								targetTile = g.p.gridPos + new Vector2I(-2, -2);
+								break;
+							
+							case Vector2I v when g.p.ghostAIDir == Vector2I.Down:
+								targetTile = g.p.gridPos + new Vector2I(0, 2);
+								break;
+							
+							case Vector2I v when g.p.ghostAIDir == Vector2I.Left:
+								targetTile = g.p.gridPos + new Vector2I(-2, 0);
+								break;
+							
+							case Vector2I v when g.p.ghostAIDir == Vector2I.Right:
+								targetTile = g.p.gridPos + new Vector2I(2, 0);
+								break;
+						}
 						break;
 					
 					case string t when Name == "Clyde":
-						
+						float distToPacMan = gridPos.DistanceTo(g.p.gridPos);
+
+						if(distToPacMan >= 8) targetTile = g.p.gridPos; else targetTile = new Vector2I(0, 34);
 						break;
 				}
 				break;
@@ -504,6 +552,10 @@ public partial class Ghost : Node2D
 		// If eaten.
 		if(eaten) newMod = 2f;
 
+		// If exiting.
+		if(currentState == states.EXIT
+		|| currentState == states.HOME) newMod = 0.5f;
+
 		return newMod;
 	}
 
@@ -524,4 +576,32 @@ public partial class Ghost : Node2D
 
 		distToGhostHouse = Position.DistanceTo(gHouseEntryPnt);
 	}
+
+	public void SetExitDots() {
+		bool lostLife = m.eatenDotCoords.Count > 0;
+
+		switch(Name) {
+			case "Blinky":
+				dotsToExit = 0;
+				break;
+			
+			case "Pinky":
+				if(!lostLife) dotsToExit = 0; else dotsToExit = 7;
+				break;
+			
+			case "Inky":
+				if(!lostLife) {
+					if(m.level == 1) dotsToExit = 30; else dotsToExit = 0;
+				} else dotsToExit = 17;
+				break;
+			
+			case "Clyde":
+				if(!lostLife) {
+					if(m.level ==1) dotsToExit = 60; else if(m.level == 2) dotsToExit = 50; else dotsToExit = 0;
+				} else dotsToExit = 32;
+				break;
+		}
+	}
+
+
 }

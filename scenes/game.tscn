@@ -123,18 +123,18 @@ shader_parameter/palette_count = 7.0
 shader_parameter/palette_index = 0.0
 shader_parameter/palette = ExtResource("8_j4uda")
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_4wp0p"]
-resource_local_to_scene = true
-shader = ExtResource("2_mbe48")
-shader_parameter/palette_count = 7.0
-shader_parameter/palette_index = 2.0
-shader_parameter/palette = ExtResource("8_j4uda")
-
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_b6bj4"]
 resource_local_to_scene = true
 shader = ExtResource("2_mbe48")
 shader_parameter/palette_count = 7.0
 shader_parameter/palette_index = 1.0
+shader_parameter/palette = ExtResource("8_j4uda")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_4wp0p"]
+resource_local_to_scene = true
+shader = ExtResource("2_mbe48")
+shader_parameter/palette_count = 7.0
+shader_parameter/palette_index = 2.0
 shader_parameter/palette = ExtResource("8_j4uda")
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_2404k"]
@@ -281,17 +281,17 @@ visible = false
 material = SubResource("ShaderMaterial_6ogjk")
 position = Vector2(112, 116)
 
-[node name="Inky" parent="." instance=ExtResource("7_m1ptb")]
-process_mode = 1
-visible = false
-material = SubResource("ShaderMaterial_4wp0p")
-position = Vector2(96, 140)
-
 [node name="Pinky" parent="." instance=ExtResource("9_tpd7g")]
 process_mode = 1
 visible = false
 material = SubResource("ShaderMaterial_b6bj4")
 position = Vector2(112, 140)
+
+[node name="Inky" parent="." instance=ExtResource("7_m1ptb")]
+process_mode = 1
+visible = false
+material = SubResource("ShaderMaterial_4wp0p")
+position = Vector2(96, 140)
 
 [node name="Clyde" parent="." instance=ExtResource("11_ups55")]
 process_mode = 1
@@ -311,17 +311,17 @@ position = Vector2(-8, -8)
 texture = ExtResource("14_es3n4")
 hframes = 4
 
-[node name="InkyTarget" type="Sprite2D" parent="Targets" groups=["target"]]
-position = Vector2(-8, -8)
-texture = ExtResource("14_es3n4")
-hframes = 4
-frame = 2
-
 [node name="PinkyTarget" type="Sprite2D" parent="Targets" groups=["target"]]
 position = Vector2(-8, -8)
 texture = ExtResource("14_es3n4")
 hframes = 4
 frame = 1
+
+[node name="InkyTarget" type="Sprite2D" parent="Targets" groups=["target"]]
+position = Vector2(-8, -8)
+texture = ExtResource("14_es3n4")
+hframes = 4
+frame = 2
 
 [node name="ClydeTarget" type="Sprite2D" parent="Targets" groups=["target"]]
 position = Vector2(-8, -8)

@@ -20,15 +20,16 @@ public partial class Game : Node2D
 	public int dotsEaten = 0;
 	private int bigDotsEaten = 0;
 	public int eatenGhosts = 0;
+	public int ghostsInPlay = 0;
 	private int mazePalette = 0;
 	private int[] saveTicks = new int[] {0, 0};
 
-	public bool scaredMode = true;
+	public bool scaredMode = false;
 	public bool eyesMode = false;
 
 	private Vector2I lastGridPos = Vector2I.Zero;
 
-	private List<Ghost> ghosts = new List<Ghost>();
+	public List<Ghost> ghosts = new List<Ghost>();
 	private List<Sprite2D> ghostTargets = new List<Sprite2D>();
 
 	public override void _Ready() {
@@ -47,10 +48,10 @@ public partial class Game : Node2D
 					c = new Color("#ff0000");
 					break;
 				case 1:
-					c = new Color("#00ffff");
+					c = new Color("#ffb7ff");
 					break;
 				case 2:
-					c = new Color("#ffb7ff");
+					c = new Color("#00ffff");
 					break;
 				case 3:
 					c = new Color("#ffb751");
@@ -76,7 +77,7 @@ public partial class Game : Node2D
 
 	private void StateLogic(double delta) {
 		ticks++; // Ticks will always count up regardless of the current state. Use for timing of events.
-		if(scaredTicks > 0) scaredTicks--;
+		if(scaredTicks > 0 && currentState != states.GHOSTEATEN) scaredTicks--;
 
 		UpdateTargetTiles();
 
@@ -131,6 +132,13 @@ public partial class Game : Node2D
 							dotEatSample++;
 							if(dotEatSample > 1) dotEatSample = 0;
 							dotsEaten++;
+
+							for(int i = 0; i < ghosts.Count; i++) {
+								ghosts[i].dotsToExit--;
+								if(ghosts[i].dotsToExit < 0) ghosts[i].dotsToExit = 0;
+							}
+
+							m.eatenDotCoords.Add(p.gridPos);
 						}
 					}
 					lastGridPos = p.gridPos;
@@ -157,13 +165,9 @@ public partial class Game : Node2D
 				}
 				break;
 		}
-
-		
 	}
 
 	private states GetTransition(double delta) {
-		
-
 		switch(currentState) {
 			case states.INIT:
 				if(ticks == 1) return states.SHOWTEXT;
@@ -221,8 +225,6 @@ public partial class Game : Node2D
 				for(int i = 0; i < GetTree().GetNodesInGroup("ghost").Count; i++) {
 					Ghost boo = (Ghost)GetTree().GetNodesInGroup("ghost")[i];
 					ghosts.Add(boo);
-
-					if(i == 0) boo.followGhost = ghosts[0]; else boo.followGhost = ghosts[i - 1];
 
 					boo.Show();
 				}
@@ -286,10 +288,9 @@ public partial class Game : Node2D
 
 				p.SetPhysicsProcess(false);
 				for(int i = 0; i < ghosts.Count; i++) {
+					ghosts[i].SetProcess(false);
 					ghosts[i].SetPhysicsProcess(false);
 				}
-
-				//GetTree().Paused = true;
 
 				break;
 			
@@ -314,6 +315,10 @@ public partial class Game : Node2D
 			case states.SHOWACTORS:
 				rText.Hide();
 				p.SetState(PacMan.states.ACTIVE);
+				for(int i = 0; i < ghosts.Count; i++) {
+					ghosts[i].SetProcess(true);
+					ghosts[i].SetPhysicsProcess(true);
+				}
 				break;
 			
 			case states.SCATTER:
@@ -326,17 +331,22 @@ public partial class Game : Node2D
 				break;
 			
 			case states.GHOSTEATEN:
+				GhostScore gs = (GhostScore)GetNode("GhostScore");
+
 				PlayLoop("eyes");
 				ticks = saveTicks[0];
 				scaredTicks = saveTicks[1];
 				p.Show();
 				p.SetPhysicsProcess(true);
 
+				gs.Hide();
+
 				for(int i = 0; i < ghosts.Count; i++) {
 					if(!ghosts[i].Visible) {
 						ghosts[i].eaten = true;
 						ghosts[i].Show();
 					}
+					ghosts[i].SetProcess(true);
 					ghosts[i].SetPhysicsProcess(true);
 				}
 				break;
@@ -446,10 +456,8 @@ public partial class Game : Node2D
 
 		// Add trigger to send Ghosts into frightened mode here.
 		for(int i = 0; i < ghosts.Count; i++) {
-			if(ghosts[i].currentState == Ghost.states.SEEK) {
-				ghosts[i].frightened = true;
-				ghosts[i].forceReverse = true;
-			}
+			if(!ghosts[i].frightened) ghosts[i].forceReverse = true;
+			ghosts[i].frightened = true;
 		}
 
 		if(newValue > 0) {

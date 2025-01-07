@@ -12,6 +12,7 @@ public partial class PacMan : Node2D
 	private float baseMod = 1;
 	private Vector2I direction = Vector2I.Left;
 	private Vector2I oldDirection = Vector2I.Left;
+	public Vector2I ghostAIDir = Vector2I.Zero;
 	public Vector2I desiredDir = Vector2I.Zero;
 	public Vector2I gridPos = Vector2I.Zero;
 	public int moveDelay = 0;
@@ -62,6 +63,7 @@ public partial class PacMan : Node2D
 
 					if(direction != oldDirection) {
 						PlayAnim(direction);
+						if(direction != Vector2I.Zero) ghostAIDir = direction;
 						oldDirection = direction;
 					}
 				}

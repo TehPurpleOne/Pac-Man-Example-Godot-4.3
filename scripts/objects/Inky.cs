@@ -9,5 +9,14 @@ public partial class Inky : Ghost
 		m = (Master)GetNode("/root/Master");
 		g = (Game)GetParent();
         sprite = (AnimatedSprite2D)GetNode("Sprite");
+
+		basePalette = 2;
+		direction = Vector2I.Up;
+		desiredDir = Vector2I.Left;
+
+		SetExitDots();
+		SetState(states.HOME);
+		SetProcess(false);
+		SetPhysicsProcess(false);
 	}
 }

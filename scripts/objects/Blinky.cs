@@ -12,6 +12,9 @@ public partial class Blinky : Ghost
 		direction = Vector2I.Left;
 		desiredDir = Vector2I.Left;
 
-		SetState(states.INIT);
+		SetExitDots();
+		SetState(states.SEEK);
+		SetProcess(false);
+		SetPhysicsProcess(false);
 	}
 }
