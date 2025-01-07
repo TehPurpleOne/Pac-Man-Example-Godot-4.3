@@ -336,7 +336,7 @@ public partial class Ghost : Node2D
 	public bool TileCenter() {
 		Vector2I currentTile = GetGridPosition(Position);
 		Vector2 tileCenter = new Vector2(currentTile.X * 8 + 4, currentTile.Y * 8 + 4);
-		float margin = 1.0f;
+		float margin = 1.25f;
 
 		return Mathf.Abs(Position.X - tileCenter.X) < margin && Mathf.Abs(Position.Y - tileCenter.Y) < margin;
 	}
