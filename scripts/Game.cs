@@ -81,6 +81,8 @@ public partial class Game : Node2D
 
 		UpdateTargetTiles();
 
+		if(Input.IsActionJustPressed("ui_accept")) GetTree().Paused = !GetTree().Paused;
+
 		switch(currentState) {
 			case states.SCATTER:
 			case states.CHASE:

@@ -284,21 +284,28 @@ public partial class Ghost : Node2D
 
 						switch(g.p.ghostAIDir) {
 							case Vector2I v when g.p.ghostAIDir == Vector2I.Up:
-								targetTile = g.p.gridPos + new Vector2I(-2, -2);
+								firstPhase = g.p.gridPos + new Vector2I(-2, -2);
 								break;
 							
 							case Vector2I v when g.p.ghostAIDir == Vector2I.Down:
-								targetTile = g.p.gridPos + new Vector2I(0, 2);
+								firstPhase = g.p.gridPos + new Vector2I(0, 2);
 								break;
 							
 							case Vector2I v when g.p.ghostAIDir == Vector2I.Left:
-								targetTile = g.p.gridPos + new Vector2I(-2, 0);
+								firstPhase = g.p.gridPos + new Vector2I(-2, 0);
 								break;
 							
 							case Vector2I v when g.p.ghostAIDir == Vector2I.Right:
-								targetTile = g.p.gridPos + new Vector2I(2, 0);
+								firstPhase = g.p.gridPos + new Vector2I(2, 0);
 								break;
 						}
+
+						Vector2I secondPhase = g.ghosts[0].gridPos - firstPhase; // get the grid position of Blinky to phase 1.
+
+						secondPhase = -secondPhase; // Reverse it.
+						secondPhase = secondPhase * 2; // Double it.
+
+						targetTile = g.ghosts[0].gridPos + secondPhase;
 						break;
 					
 					case string t when Name == "Clyde":
