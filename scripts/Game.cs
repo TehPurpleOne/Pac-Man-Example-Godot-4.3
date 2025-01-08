@@ -44,6 +44,7 @@ public partial class Game : Node2D
 	public int scaredTicks = 0;
 	public int extendTicks = 0;
 	public int dotsEaten = 0;
+	private int ticksSinceLastDot = 0;
 	private int bigDotsEaten = 0;
 	public int eatenGhosts = 0;
 	public int ghostsInPlay = 0;
@@ -107,6 +108,7 @@ public partial class Game : Node2D
 
 	private void StateLogic(double delta) {
 		ticks++; // Ticks will always count up regardless of the current state. Use for timing of events.
+		ticksSinceLastDot++; // A failsafe to prevent the player from camping to stop the ghosts exiting the house.
 		if(extendTicks > 0) extendTicks--;
 		if(scaredTicks > 0 && currentState != states.GHOSTEATEN) scaredTicks--;
 		if(scaredTicks == 0 && eatenGhosts > 0) eatenGhosts = 0;
@@ -120,6 +122,8 @@ public partial class Game : Node2D
 			case states.SCATTER:
 			case states.CHASE:
 				SoundLoops();
+
+				ForceGhostExit();
 
 				if(lastGridPos != p.gridPos) {
 					if(tml.GetCellSourceId(p.gridPos) == 0) {
@@ -148,7 +152,7 @@ public partial class Game : Node2D
 								ghosts[i].dotsToExit--;
 								if(ghosts[i].dotsToExit < 0) ghosts[i].dotsToExit = 0;
 							}
-
+							ticksSinceLastDot = 0;
 							m.eatenDotCoords.Add(p.gridPos);
 						}
 					}
@@ -379,10 +383,12 @@ public partial class Game : Node2D
 				m.eatenDotCoords.Clear();
 				if(m.p1Lives == 0) {
 					m.p1Score = 0;
+					m.level = 1;
 					m.p1Lives = 3;
 				}
 				if(m.p2Lives == 0) {
 					m.p2Score = 0;
+					m.level = 1;
 					m.p2Lives = 3;
 				}
 				break;
@@ -744,5 +750,24 @@ public partial class Game : Node2D
 					break;
 			}
 		}
+	}
+
+	private void ForceGhostExit() {
+		if(ticksSinceLastDot == 300) {
+			switch(ghostsInPlay) {
+				case 1:
+					ghosts[1].dotsToExit = 0;
+					break;
+				
+				case 2:
+					ghosts[2].dotsToExit = 0;
+					break;
+				
+				case 3:
+					ghosts[3].dotsToExit = 0;
+					break;
+			}
+			ticksSinceLastDot = 0;
+		}	
 	}
 }
