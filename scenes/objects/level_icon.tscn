@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://dh0kt1mycv2b"]
+
+[ext_resource type="Texture2D" uid="uid://dk4k5pjy0l3g3" path="res://assets/sprites/icons.png" id="1_g6ye3"]
+
+[node name="LevelIcon" type="Sprite2D"]
+texture = ExtResource("1_g6ye3")
+hframes = 9

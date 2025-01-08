@@ -8,15 +8,41 @@ public partial class Game : Node2D
 	private TileMapLayer tml;
 	public PacMan p;
 
-	public enum states {NULL, INIT, SHOWTEXT, SHOWACTORS, SCATTER, CHASE, GHOSTEATEN, LOSE, WIN, NEXTLEVEL, GAMEOVER}
+	public enum states {NULL, INIT, SHOWTEXT, SHOWACTORS, SCATTER, CHASE, GHOSTEATEN, LOSE, WIN, NEXTLEVEL, LIVESCHECK, GAMEOVER};
 	public states currentState = states.NULL;
 	private states previousState = states.NULL;
+
+	private enum soundStates {NULL, SIREN1, SIREN2, SIREN3, SIREN4, SIREN5, FRIGHTENED, EYES, EXTEND};
+	private soundStates currentLoop = soundStates.NULL;
+
+	private List<int> levelIcons = new List<int>() {
+		0,
+		1,
+		2,
+		2,
+		3,
+		3,
+		4,
+		4,
+		5,
+		5,
+		6,
+		6,
+		7,
+		7,
+		7,
+		7,
+		7,
+		7,
+		7
+	};
 
 	private int ticks = 0;
 	private int ticksToNext = 0;
 	private int phase = 0;
 	private int dotEatSample = 0;
 	public int scaredTicks = 0;
+	public int extendTicks = 0;
 	public int dotsEaten = 0;
 	private int bigDotsEaten = 0;
 	public int eatenGhosts = 0;
@@ -26,6 +52,8 @@ public partial class Game : Node2D
 
 	public bool scaredMode = false;
 	public bool eyesMode = false;
+	private bool extraLife = false;
+	public bool debug = false;
 
 	private Vector2I lastGridPos = Vector2I.Zero;
 
@@ -41,6 +69,8 @@ public partial class Game : Node2D
 	}
 
     public override void _Draw() {
+		if(!debug) return;
+
         for(int i = 0; i < ghostTargets.Count; i++) {
 			Color c = new Color();
 			switch(i) {
@@ -77,42 +107,18 @@ public partial class Game : Node2D
 
 	private void StateLogic(double delta) {
 		ticks++; // Ticks will always count up regardless of the current state. Use for timing of events.
+		if(extendTicks > 0) extendTicks--;
 		if(scaredTicks > 0 && currentState != states.GHOSTEATEN) scaredTicks--;
+		if(scaredTicks == 0 && eatenGhosts > 0) eatenGhosts = 0;
 
 		UpdateTargetTiles();
 
-		if(Input.IsActionJustPressed("ui_accept")) GetTree().Paused = !GetTree().Paused;
+		if(Input.IsActionJustPressed("ui_accept")) debug = !debug;
 
 		switch(currentState) {
 			case states.SCATTER:
 			case states.CHASE:
-				// Handle the looping sound effects
-				// Siren
-				if(scaredMode && scaredTicks == 0 || eyesMode && eatenGhosts == 0) {
-					switch(bigDotsEaten) {
-						case 0:
-							PlayLoop("siren0");
-							break;
-						
-						case 1:
-							PlayLoop("siren1");
-							break;
-						
-						case 2:
-							PlayLoop("siren2");
-							break;
-						
-						case 3:
-							PlayLoop("siren3");
-							break;
-						
-						case 4:
-							PlayLoop("siren4");
-							break;
-					}
-					scaredMode = false;
-					eyesMode = false;
-				}
+				SoundLoops();
 
 				if(lastGridPos != p.gridPos) {
 					if(tml.GetCellSourceId(p.gridPos) == 0) {
@@ -124,10 +130,12 @@ public partial class Game : Node2D
 
 							if(smallDot) {
 								p.moveDelay = 1; // Delay Pac-Man by a single frame.
+								UpdateScores(10);
 							} else {
 								p.moveDelay = 3;
 								bigDotsEaten++;
 								scaredTicks = SetFrightenedMode();
+								UpdateScores(50);
 							}
 							// Fun fact, the eating noises actually alternate between two samples in the arcade original. This is recreated here.
 							PlaySingle("eat_dot_" + dotEatSample.ToString());
@@ -144,6 +152,19 @@ public partial class Game : Node2D
 						}
 					}
 					lastGridPos = p.gridPos;
+				}
+				break;
+			
+			case states.LOSE:
+				if(ticks == 60) {
+					GetTree().Paused = false;
+					for(int i = 0; i < ghosts.Count; i++) {
+						ghosts[i].SetProcess(false);
+						ghosts[i].SetPhysicsProcess(false);
+						ghosts[i].Hide();
+					}
+
+					p.SetState(PacMan.states.DEADA);
 				}
 				break;
 
@@ -172,7 +193,9 @@ public partial class Game : Node2D
 	private states GetTransition(double delta) {
 		switch(currentState) {
 			case states.INIT:
-				if(ticks == 1) return states.SHOWTEXT;
+				//if(ticks == 1) return states.SHOWTEXT;
+				if(ticks == 1 && m.level == 1 && m.eatenDotCoords.Count == 0) return states.SHOWTEXT;
+				if(ticks == 1 && m.level > 1 || m.eatenDotCoords.Count > 0) return states.SHOWACTORS;
 				break;
 			
 			case states.SHOWTEXT:
@@ -197,6 +220,14 @@ public partial class Game : Node2D
 				if(ticks == 45) return previousState;
 				break;
 			
+			case states.LOSE:
+				if(ticks == 300) return states.LIVESCHECK;
+				break;
+			
+			case states.GAMEOVER:
+				if(ticks == 300) m.ReloadScene();
+				break;
+			
 			case states.WIN:
 				if(ticks == 150) return states.NEXTLEVEL;
 				break;
@@ -211,6 +242,20 @@ public partial class Game : Node2D
 		Label gText = (Label)GetNode("GameOver");
 
 		switch(newState) {
+			case states.INIT:
+				// First, check the eaten dots coorindates stored in Master.
+				for(int i = 0; i < m.eatenDotCoords.Count; i++) {
+					tml.SetCell(m.eatenDotCoords[i], -1);
+				}
+
+				dotsEaten = m.eatenDotCoords.Count;
+
+				GD.Print("Current Level is:",m.level);
+
+				UpdateScores(0);
+				UpdateLowerUI();
+				break;
+
 			case states.SHOWTEXT:
 				if(m.currentPlayer == 1) pText.Text = "PLAYER ONE"; else pText.Text = "PLAYER TWO";
 
@@ -222,6 +267,7 @@ public partial class Game : Node2D
 			
 			case states.SHOWACTORS:
 				pText.Hide();
+				rText.Show();
 				p.Show();
 
 				for(int i = 0; i < GetTree().GetNodesInGroup("ghost").Count; i++) {
@@ -282,11 +328,13 @@ public partial class Game : Node2D
 				saveTicks[0] = ticks;
 				saveTicks[1] = scaredTicks;
 
-				eatenGhosts++;
-
-				gs.s.Frame = eatenGhosts - 1;
+				gs.s.Frame = eatenGhosts;
 				gs.Position = p.Position;
 				gs.Show();
+
+				UpdateScores((eatenGhosts + 1) * 200);
+
+				eatenGhosts++;
 
 				p.SetPhysicsProcess(false);
 				for(int i = 0; i < ghosts.Count; i++) {
@@ -296,14 +344,58 @@ public partial class Game : Node2D
 
 				break;
 			
-			case states.WIN:
+			case states.LOSE:
+				m.StopLoop();
 				GetTree().Paused = true;
+				break;
+			
+			case states.LIVESCHECK:
+				//if(m.currentPlayer == 1) m.p1Lives--; else m.p2Lives--;
+
+				int saveCurrentPlayer = m.currentPlayer;
+
+				// First, check to see if the game is in two player mode. If so, check the next player's lives.
+				if(m.players == 2 && m.currentPlayer == 1 && m.p2Lives > 0
+				|| m.players == 2 && m.currentPlayer == 2 && m.p1Lives > 0) {
+					int getCurrentPlayerLvl = m.level;
+					m.level = m.savedLevel;
+					m.savedLevel = getCurrentPlayerLvl;
+
+					List<Vector2I> getCurrentEatenDots = m.eatenDotCoords;
+					m.eatenDotCoords = m.savedEatenDotCoords;
+					m.savedEatenDotCoords = getCurrentEatenDots;
+
+					m.currentPlayer++;
+					if(m.currentPlayer > 2) m.currentPlayer = 1;
+				}
+
+				// Now that the level has been adjusted and saved, see if the game will automatically reload or go into Game Over mode.
+				if(saveCurrentPlayer == 1 && m.p1Lives > 0
+				|| saveCurrentPlayer == 2 && m.p2Lives > 0) m.ReloadScene(); else SetState(states.GAMEOVER);
+
+				break;
+			
+			case states.GAMEOVER:
+				gText.Show();
+				m.eatenDotCoords.Clear();
+				if(m.p1Lives == 0) {
+					m.p1Lives = 3;
+				}
+				if(m.p2Lives == 0) {
+					m.p2Lives = 3;
+				}
+				break;
+			
+			case states.WIN:
+				m.StopLoop();
+				GetTree().Paused = true;
+				m.eatenDotCoords.Clear();
 				break;
 			
 			case states.NEXTLEVEL:
 				m.level++;
 				GetTree().Paused = false;
-				GetTree().ReloadCurrentScene();
+				m.ReloadScene();
 				break;
 		}
 	}
@@ -335,7 +427,6 @@ public partial class Game : Node2D
 			case states.GHOSTEATEN:
 				GhostScore gs = (GhostScore)GetNode("GhostScore");
 
-				PlayLoop("eyes");
 				ticks = saveTicks[0];
 				scaredTicks = saveTicks[1];
 				p.Show();
@@ -376,7 +467,7 @@ public partial class Game : Node2D
 		} else GD.Print("Sound sample ",name," not found!");
 	}
 
-	private void PlayLoop(string name) {
+	public void PlayLoop(string name) {
 		// This function will call a looping sound sample.
 		string path = "res://assets/audio/" + name + ".wav";
 		if(ResourceLoader.Exists(path)) {
@@ -456,14 +547,9 @@ public partial class Game : Node2D
 				break;
 		}
 
-		// Add trigger to send Ghosts into frightened mode here.
 		for(int i = 0; i < ghosts.Count; i++) {
 			if(!ghosts[i].frightened) ghosts[i].forceReverse = true;
-			ghosts[i].frightened = true;
-		}
-
-		if(newValue > 0) {
-			PlayLoop("fright");
+			if(!ghosts[i].eaten) ghosts[i].frightened = true;
 		}
 
 		return newValue;
@@ -472,6 +558,169 @@ public partial class Game : Node2D
 	private void UpdateTargetTiles() {
 		for(int i = 0; i < ghostTargets.Count; i++) {
 			ghostTargets[i].Position = tml.MapToLocal(ghosts[i].targetPos);
+			if(!debug) ghostTargets[i].Position = tml.MapToLocal(new Vector2I(-1, -1));
+		}
+	}
+
+	private void SoundLoops() {
+		int sGhosts = 0;
+		int eGhosts = 0;
+		soundStates newLoop = soundStates.NULL;
+
+		for(int i = 0; i < ghosts.Count; i++) {
+			if(ghosts[i].frightened) sGhosts++;
+			if(ghosts[i].eaten) eGhosts++;
+		}
+
+		if(sGhosts > 0) newLoop = soundStates.FRIGHTENED;
+		if(eGhosts > 0) newLoop = soundStates.EYES;
+
+		if(sGhosts == 0 && scaredTicks > 0) {
+			scaredTicks = 0;
+		}
+
+		if(sGhosts == 0 && eGhosts == 0) {
+			switch(bigDotsEaten) {
+				case 0:
+					newLoop = soundStates.SIREN1;
+					break;
+				
+				case 1:
+					newLoop = soundStates.SIREN2;
+					break;
+				
+				case 2:
+					newLoop = soundStates.SIREN3;
+					break;
+				
+				case 3:
+					newLoop = soundStates.SIREN4;
+					break;
+				
+				case 4:
+					newLoop = soundStates.SIREN5;
+					break;
+			}
+		}
+
+		if(extendTicks > 0) newLoop = soundStates.EXTEND;
+
+		if(newLoop != currentLoop) {
+			switch(newLoop) {
+				case soundStates.SIREN1:
+					PlayLoop("siren0");
+					break;
+				
+				case soundStates.SIREN2:
+					PlayLoop("siren0");
+					break;
+
+				case soundStates.SIREN3:
+					PlayLoop("siren0");
+					break;
+
+				case soundStates.SIREN4:
+					PlayLoop("siren0");
+					break;
+				
+				case soundStates.SIREN5:
+					PlayLoop("siren0");
+					break;
+
+				case soundStates.FRIGHTENED:
+					PlayLoop("fright");
+					break;
+				
+				case soundStates.EYES:
+					PlayLoop("eyes");
+					break;
+				
+				case soundStates.EXTEND:
+					PlayLoop("extend");
+					break;
+			}
+
+			currentLoop = newLoop;
+		}
+	}
+
+	public void UpdateScores(int value) {
+		Label p1 = (Label)GetNode("TileMapLayer/UpperUI/1up/1upScore");
+		Label p2 = (Label)GetNode("TileMapLayer/UpperUI/2up/2upScore");
+		Label hi = (Label)GetNode("TileMapLayer/UpperUI/HighScore/HighScore");
+
+		if(m.currentPlayer == 1) m.p1Score += value; else m.p2Score += value;
+
+		// Add lives. The original game had a dip switch that would allow for one free extra life at 10000, 15000, 20000, or not at all.
+		if(m.p1Score >= 10000 && !m.p1ExtraLife
+		|| m.p2Score >= 10000 && !m.p2ExtraLife) {
+			extendTicks = 70;
+			if(m.currentPlayer == 1) m.p1Lives++; else m.p2Lives++;
+			UpdateLowerUI();
+			if(m.currentPlayer == 1) m.p1ExtraLife = true ; else m.p2ExtraLife = true;
+		}
+
+		if(m.p1Score > m.highScore) m.highScore = m.p1Score;
+		if(m.p2Score > m.highScore) m.highScore = m.p2Score;
+
+		p1.Text = m.p1Score.ToString();
+		p2.Text = m.p2Score.ToString();
+		hi.Text = m.highScore.ToString();
+	}
+
+	private void UpdateLowerUI() {
+		Control lowUI = (Control)GetNode("LowerUI");
+		int getLives = 0;
+
+		if(m.currentPlayer == 1) getLives = m.p1Lives; else getLives = m.p2Lives;
+
+		// Clear the current icons.
+		for(int i = 0; i < lowUI.GetChildCount(); i++) {
+			lowUI.GetChild(0).QueueFree();
+		}
+
+		// Populate Lives icons.
+		for(int i = 0; i < getLives - 1; i++) {
+			PackedScene el = (PackedScene)ResourceLoader.Load("res://scenes/objects/extra_life.tscn");
+			Sprite2D result = (Sprite2D)el.Instantiate();
+			lowUI.AddChild(result);
+			result.Position = new Vector2(8 + (i * 16), 280);
+		}
+
+		// Populate the Level Icons.
+		int pos = 0;
+		switch(m.level) {
+			case int v when m.level < 8:
+				for(int i = 0; i < m.level; i++) {
+					PackedScene li = (PackedScene)ResourceLoader.Load("res://scenes/objects/level_icon.tscn");
+					Sprite2D result = (Sprite2D)li.Instantiate();
+					lowUI.AddChild(result);
+					result.Position = new Vector2(216 - (i * 16), 280);
+					result.Frame = levelIcons[i];
+				}
+				break;
+			
+			case int v when m.level > 7 && m.level < 19:
+				for(int i = m.level - 7; i < m.level; i++) {
+					PackedScene li = (PackedScene)ResourceLoader.Load("res://scenes/objects/level_icon.tscn");
+					Sprite2D result = (Sprite2D)li.Instantiate();
+					lowUI.AddChild(result);
+					result.Position = new Vector2(216 - (pos * 16), 280);
+					result.Frame = levelIcons[i];
+					pos++;
+				}
+				break;
+			
+			case int v when m.level >= 19:
+				for(int i = 12; i < 19; i++) {
+					PackedScene li = (PackedScene)ResourceLoader.Load("res://scenes/objects/level_icon.tscn");
+					Sprite2D result = (Sprite2D)li.Instantiate();
+					lowUI.AddChild(result);
+					result.Position = new Vector2(216 - (pos * 16), 280);
+					result.Frame = levelIcons[i];
+					pos++;
+				}
+				break;
 		}
 	}
 }

@@ -51,7 +51,7 @@ region = Rect2(272, 0, 16, 16)
 atlas = ExtResource("1_3bccm")
 region = Rect2(288, 0, 16, 16)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_uudns"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_cxtd0"]
 atlas = ExtResource("1_3bccm")
 region = Rect2(304, 0, 16, 16)
 
@@ -145,13 +145,18 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_fvimq")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_uudns")
 }],
 "loop": false,
-"name": &"DEAD",
+"name": &"DEADA",
 "speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_cxtd0")
+}],
+"loop": false,
+"name": &"DEADB",
+"speed": 2.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -235,5 +240,7 @@ script = ExtResource("1_n2rsq")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_ju1gc")
-animation = &"INIT"
+animation = &"DEADB"
 autoplay = "INIT"
+
+[connection signal="animation_finished" from="Sprite" to="." method="OnAnimDone"]

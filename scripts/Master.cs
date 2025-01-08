@@ -7,14 +7,19 @@ public partial class Master : Node2D
 	private AudioStreamPlayer activeLoop;
 	private List<AudioStreamPlayer> activeSingles = new List<AudioStreamPlayer>();
 	public List<Vector2I> eatenDotCoords = new List<Vector2I>();
+	public List<Vector2I> savedEatenDotCoords = new List<Vector2I>();
 
-	public int level = 1;
+	public int level = 19;
+	public int savedLevel = 1;
 	public int players = 1;
 	public int currentPlayer = 1;
+	public int p1Lives = 3;
+	public int p2Lives = 3;
 	public int p1Score = 0;
 	public int p2Score = 0;
-	public int p1HiScore = 0;
-	public int p2HiScore = 0;
+	public int highScore = 0;
+	public bool p1ExtraLife = false;
+	public bool p2ExtraLife = false;
 
 	public void PlaySingleSound(AudioStream name) {
 		// Create a new AudioStreamPlayer for the sound effect.
@@ -68,5 +73,19 @@ public partial class Master : Node2D
 	private void OnSingleDone(AudioStreamPlayer sfx) {
 		sfx.QueueFree();
 		activeSingles.Remove(sfx);
+	}
+
+	public void ReloadScene() {
+		Control sm = (Control)GetNode("SceneManager");
+		
+		if(sm.GetChildCount() > 0) {
+			sm.GetChild(0).QueueFree();
+		}
+
+		PackedScene game = (PackedScene)ResourceLoader.Load("res://scenes/game.tscn");
+
+		Node2D result = (Node2D)game.Instantiate();
+
+		sm.AddChild(result);
 	}
 }

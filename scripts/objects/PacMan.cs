@@ -1,11 +1,12 @@
 using Godot;
 using System;
+using System.Runtime.CompilerServices;
 
 public partial class PacMan : Node2D
 {
 	private Master m;
 	private Game g;
-	private AnimatedSprite2D sprite;
+	public AnimatedSprite2D sprite;
 
 	private float speed = 75.75757625f;
 	private float speedMod = 1;
@@ -17,7 +18,7 @@ public partial class PacMan : Node2D
 	public Vector2I gridPos = Vector2I.Zero;
 	public int moveDelay = 0;
 
-	public enum states {NULL, INIT, ACTIVE, DEAD}
+	public enum states {NULL, INIT, ACTIVE, DEADA, DEADB}
 	public states currentState = states.NULL;
 	public states previousState = states.NULL;
 
@@ -84,7 +85,6 @@ public partial class PacMan : Node2D
 
 	private states GetTransition(double delta) {
 
-
 		return states.NULL;
 	}
 
@@ -92,6 +92,16 @@ public partial class PacMan : Node2D
 		switch(newState) {
 			case states.ACTIVE:
 				PlayAnim(direction);
+				break;
+			
+			case states.DEADA:
+				sprite.Play("DEADA");
+				g.PlayLoop("death_0");
+				break;
+			
+			case states.DEADB:
+				sprite.Play("DEADB");
+				g.PlayLoop("death_1");
 				break;
 		}
 	}
@@ -169,6 +179,19 @@ public partial class PacMan : Node2D
 			
 			case Vector2I v when dir == Vector2I.Right:
 				sprite.Play("RIGHT");
+				break;
+		}
+	}
+
+	private void OnAnimDone() {
+		switch(sprite.Animation) {
+			case "DEADA":
+				SetState(states.DEADB);
+				break;
+			
+			case "DEADB":
+				Hide();
+				GD.Print(g.Get("ticks"));
 				break;
 		}
 	}

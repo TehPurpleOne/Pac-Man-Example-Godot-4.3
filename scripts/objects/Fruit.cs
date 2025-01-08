@@ -117,6 +117,39 @@ public partial class Fruit : Node2D
 				ticks = 180;
 				g.PlaySingle("eat_fruit");
 				sprite.Frame = sprite.Frame + 8;
+				switch(sprite.Frame) {
+					case 8:
+						g.UpdateScores(100);
+						break;
+
+					case 9:
+						g.UpdateScores(300);
+						break;
+					
+					case 10:
+						g.UpdateScores(500);
+						break;
+					
+					case 11:
+						g.UpdateScores(700);
+						break;
+					
+					case 12:
+						g.UpdateScores(1000);
+						break;
+					
+					case 13:
+						g.UpdateScores(2000);
+						break;
+					
+					case 14:
+						g.UpdateScores(3000);
+						break;
+					
+					case 15:
+						g.UpdateScores(5000);
+						break;
+				}
 				break;
 		}
 	}

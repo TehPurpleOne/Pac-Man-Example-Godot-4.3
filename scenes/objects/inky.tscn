@@ -117,4 +117,4 @@ script = ExtResource("1_ql5lt")
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
 use_parent_material = true
 sprite_frames = SubResource("SpriteFrames_tju4m")
-animation = &"LEFT"
+animation = &"UP"

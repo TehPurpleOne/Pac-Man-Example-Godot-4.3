@@ -41,7 +41,7 @@ public partial class Ghost : Node2D
 
 		if(frightened) { // Set the frightened palette and flash the ghosts when the timer is almost done.
 			switch(g.scaredTicks) {
-				case int v when g.scaredTicks > 180:
+				case int v when g.scaredTicks > 120:
 					if(currentPalette != 5) SetPalette(5);
 					break;
 				
@@ -50,6 +50,7 @@ public partial class Ghost : Node2D
 						int getCurrent = currentPalette;
 						getCurrent++;
 						if(getCurrent > 6) getCurrent = 5;
+						if(getCurrent < 5) getCurrent = 6;
 						SetPalette(getCurrent);
 					}
 					break;
@@ -195,8 +196,6 @@ public partial class Ghost : Node2D
 				break;
 
 			case states.HOME:
-				g.eatenGhosts--;
-				if(g.eatenGhosts < 0) g.eatenGhosts = 0;
 				eaten = false;
 				break;
 			
@@ -568,15 +567,17 @@ public partial class Ghost : Node2D
 
 	public void PositionCheck() {
 		if(g.p.gridPos == gridPos) {
-			switch(frightened && !eaten) {
+			switch(frightened) {
 				case false:
-					//g.SetState(Game.states.LOSE);
+					if(!eaten) g.SetState(Game.states.LOSE);
 					break;
 				
 				case true:
 					g.p.Hide();
 					Hide();
 					g.SetState(Game.states.GHOSTEATEN);
+					frightened = false;
+					eaten = true;
 					break;
 			}
 		}

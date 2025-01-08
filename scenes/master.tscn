@@ -4,6 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://bib5kf4aecbfd" path="res://scenes/game.tscn" id="2_qrpl4"]
 
 [node name="Master" type="Node2D"]
+process_mode = 3
 script = ExtResource("1_drk5m")
 
 [node name="ColorRect" type="ColorRect" parent="."]
