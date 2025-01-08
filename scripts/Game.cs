@@ -349,7 +349,7 @@ public partial class Game : Node2D
 				break;
 			
 			case states.LIVESCHECK:
-				//if(m.currentPlayer == 1) m.p1Lives--; else m.p2Lives--;
+				if(m.currentPlayer == 1) m.p1Lives--; else m.p2Lives--;
 
 				int saveCurrentPlayer = m.currentPlayer;
 
