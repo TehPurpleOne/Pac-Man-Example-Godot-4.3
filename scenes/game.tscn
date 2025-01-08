@@ -171,11 +171,10 @@ theme_override_fonts/font = ExtResource("2_r35ot")
 theme_override_font_sizes/font_size = 8
 text = "1UP"
 
-[node name="1upScore" type="Label" parent="TileMapLayer/UpperUI/1up"]
+[node name="1upScore" type="Label" parent="TileMapLayer/UpperUI"]
 layout_mode = 0
-offset_left = -24.0
 offset_top = 8.0
-offset_right = 32.0
+offset_right = 56.0
 offset_bottom = 16.0
 theme_override_colors/font_color = Color(0.870588, 0.870588, 1, 1)
 theme_override_constants/line_spacing = 0
@@ -195,11 +194,11 @@ theme_override_fonts/font = ExtResource("2_r35ot")
 theme_override_font_sizes/font_size = 8
 text = "2UP"
 
-[node name="2upScore" type="Label" parent="TileMapLayer/UpperUI/2up"]
+[node name="2upScore" type="Label" parent="TileMapLayer/UpperUI"]
 layout_mode = 0
-offset_left = 8.0
+offset_left = 184.0
 offset_top = 8.0
-offset_right = 32.0
+offset_right = 208.0
 offset_bottom = 16.0
 theme_override_colors/font_color = Color(0.870588, 0.870588, 1, 1)
 theme_override_constants/line_spacing = 0
@@ -219,7 +218,6 @@ theme_override_font_sizes/font_size = 8
 text = "HIGH SCORE"
 
 [node name="HighScore" type="Label" parent="TileMapLayer/UpperUI/HighScore"]
-layout_mode = 0
 offset_left = 8.0
 offset_top = 8.0
 offset_right = 64.0

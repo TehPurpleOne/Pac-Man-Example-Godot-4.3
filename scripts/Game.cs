@@ -112,6 +112,7 @@ public partial class Game : Node2D
 		if(scaredTicks == 0 && eatenGhosts > 0) eatenGhosts = 0;
 
 		UpdateTargetTiles();
+		FlashScore();
 
 		if(Input.IsActionJustPressed("ui_accept")) debug = !debug;
 
@@ -250,8 +251,6 @@ public partial class Game : Node2D
 
 				dotsEaten = m.eatenDotCoords.Count;
 
-				GD.Print("Current Level is:",m.level);
-
 				UpdateScores(0);
 				UpdateLowerUI();
 				break;
@@ -379,9 +378,11 @@ public partial class Game : Node2D
 				gText.Show();
 				m.eatenDotCoords.Clear();
 				if(m.p1Lives == 0) {
+					m.p1Score = 0;
 					m.p1Lives = 3;
 				}
 				if(m.p2Lives == 0) {
+					m.p2Score = 0;
 					m.p2Lives = 3;
 				}
 				break;
@@ -449,8 +450,6 @@ public partial class Game : Node2D
 	public void SetState(states newState) {
 		previousState = currentState;
 		currentState = newState;
-
-		GD.Print("Moving to state ",currentState,": ",ticks,", ",ticksToNext,", ",phase);
 
 		ticks = 0;
 
@@ -645,9 +644,12 @@ public partial class Game : Node2D
 	}
 
 	public void UpdateScores(int value) {
-		Label p1 = (Label)GetNode("TileMapLayer/UpperUI/1up/1upScore");
-		Label p2 = (Label)GetNode("TileMapLayer/UpperUI/2up/2upScore");
+		Label p1 = (Label)GetNode("TileMapLayer/UpperUI/1upScore");
+		Label p2Parent = (Label)GetNode("TileMapLayer/UpperUI/2up");
+		Label p2 = (Label)GetNode("TileMapLayer/UpperUI/2upScore");
 		Label hi = (Label)GetNode("TileMapLayer/UpperUI/HighScore/HighScore");
+
+		if(m.players == 2) p2Parent.Show();
 
 		if(m.currentPlayer == 1) m.p1Score += value; else m.p2Score += value;
 
@@ -721,6 +723,23 @@ public partial class Game : Node2D
 					pos++;
 				}
 				break;
+		}
+	}
+
+	private void FlashScore() {
+		Label p1 = (Label)GetNode("TileMapLayer/UpperUI/1up");
+		Label p2 = (Label)GetNode("TileMapLayer/UpperUI/2up");
+
+		if(ticks % 10 == 0) {
+			switch(m.currentPlayer) {
+				case 1:
+					p1.Visible = !p1.Visible;
+					break;
+				
+				case 2:
+					p2.Visible = !p2.Visible;
+					break;
+			}
 		}
 	}
 }

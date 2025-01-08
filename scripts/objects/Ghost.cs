@@ -200,7 +200,7 @@ public partial class Ghost : Node2D
 				break;
 			
 			case states.EXIT:
-				Position = new Vector2I(112, 144);
+				Position = new Vector2I(112, (int)Position.Y);
 				direction = Vector2I.Up;
 				break;
 		}
@@ -220,8 +220,6 @@ public partial class Ghost : Node2D
 	public void SetState(states newState) {
 		previousState = currentState;
 		currentState = newState;
-
-		//GD.Print(Name," has entered state ",currentState," from state ",previousState," seeking target ",targetPos);
 
 		ExitState(previousState, currentState);
 		EnterState(currentState, previousState);

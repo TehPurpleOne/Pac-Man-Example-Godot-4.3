@@ -191,7 +191,6 @@ public partial class PacMan : Node2D
 			
 			case "DEADB":
 				Hide();
-				GD.Print(g.Get("ticks"));
 				break;
 		}
 	}

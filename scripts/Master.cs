@@ -9,9 +9,9 @@ public partial class Master : Node2D
 	public List<Vector2I> eatenDotCoords = new List<Vector2I>();
 	public List<Vector2I> savedEatenDotCoords = new List<Vector2I>();
 
-	public int level = 19;
+	public int level = 1;
 	public int savedLevel = 1;
-	public int players = 1;
+	public int players = 2;
 	public int currentPlayer = 1;
 	public int p1Lives = 3;
 	public int p2Lives = 3;
