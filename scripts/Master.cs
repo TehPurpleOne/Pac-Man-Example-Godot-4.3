@@ -11,7 +11,7 @@ public partial class Master : Node2D
 
 	public int level = 1;
 	public int savedLevel = 1;
-	public int players = 2;
+	public int players = 1;
 	public int currentPlayer = 1;
 	public int p1Lives = 3;
 	public int p2Lives = 3;

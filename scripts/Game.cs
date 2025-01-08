@@ -649,7 +649,10 @@ public partial class Game : Node2D
 		Label p2 = (Label)GetNode("TileMapLayer/UpperUI/2upScore");
 		Label hi = (Label)GetNode("TileMapLayer/UpperUI/HighScore/HighScore");
 
-		if(m.players == 2) p2Parent.Show();
+		if(m.players == 2) {
+			p2Parent.Show();
+			p2.Show();
+		}
 
 		if(m.currentPlayer == 1) m.p1Score += value; else m.p2Score += value;
 

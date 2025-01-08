@@ -162,6 +162,7 @@ offset_right = 224.0
 offset_bottom = 288.0
 
 [node name="1up" type="Label" parent="TileMapLayer/UpperUI"]
+layout_mode = 0
 offset_left = 24.0
 offset_right = 48.0
 offset_bottom = 8.0
@@ -185,6 +186,7 @@ horizontal_alignment = 2
 
 [node name="2up" type="Label" parent="TileMapLayer/UpperUI"]
 visible = false
+layout_mode = 0
 offset_left = 176.0
 offset_right = 200.0
 offset_bottom = 8.0
@@ -195,6 +197,7 @@ theme_override_font_sizes/font_size = 8
 text = "2UP"
 
 [node name="2upScore" type="Label" parent="TileMapLayer/UpperUI"]
+visible = false
 layout_mode = 0
 offset_left = 184.0
 offset_top = 8.0
@@ -208,6 +211,7 @@ text = "0"
 horizontal_alignment = 2
 
 [node name="HighScore" type="Label" parent="TileMapLayer/UpperUI"]
+layout_mode = 0
 offset_left = 72.0
 offset_right = 152.0
 offset_bottom = 8.0
@@ -218,6 +222,7 @@ theme_override_font_sizes/font_size = 8
 text = "HIGH SCORE"
 
 [node name="HighScore" type="Label" parent="TileMapLayer/UpperUI/HighScore"]
+layout_mode = 0
 offset_left = 8.0
 offset_top = 8.0
 offset_right = 64.0
