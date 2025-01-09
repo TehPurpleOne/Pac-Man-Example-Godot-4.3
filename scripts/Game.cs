@@ -54,7 +54,6 @@ public partial class Game : Node2D
 	public bool scaredMode = false;
 	public bool eyesMode = false;
 	private bool extraLife = false;
-	public bool debug = false;
 
 	private Vector2I lastGridPos = Vector2I.Zero;
 
@@ -68,33 +67,6 @@ public partial class Game : Node2D
 
 		SetState(states.INIT);
 	}
-
-    public override void _Draw() {
-		if(!debug) return;
-
-        for(int i = 0; i < ghostTargets.Count; i++) {
-			Color c = new Color();
-			switch(i) {
-				case 0:
-					c = new Color("#ff0000");
-					break;
-				case 1:
-					c = new Color("#ffb7ff");
-					break;
-				case 2:
-					c = new Color("#00ffff");
-					break;
-				case 3:
-					c = new Color("#ffb751");
-					break;
-			}
-			DrawLine(ghostTargets[i].Position, ghosts[i].Position, c, 1.0f);
-		}
-    }
-
-    public override void _Process(double delta) {
-        QueueRedraw();
-    }
 
     public override void _PhysicsProcess(double delta) {
         if(currentState != states.NULL) {
@@ -113,10 +85,7 @@ public partial class Game : Node2D
 		if(scaredTicks > 0 && currentState != states.GHOSTEATEN) scaredTicks--;
 		if(scaredTicks == 0 && eatenGhosts > 0) eatenGhosts = 0;
 
-		UpdateTargetTiles();
 		FlashScore();
-
-		if(Input.IsActionJustPressed("ui_accept")) debug = !debug;
 
 		switch(currentState) {
 			case states.SCATTER:
@@ -251,6 +220,10 @@ public partial class Game : Node2D
 				// First, check the eaten dots coorindates stored in Master.
 				for(int i = 0; i < m.eatenDotCoords.Count; i++) {
 					tml.SetCell(m.eatenDotCoords[i], -1);
+					if(m.eatenDotCoords[i] == new Vector2I(1, 6)
+					|| m.eatenDotCoords[i] == new Vector2I(26, 6)
+					|| m.eatenDotCoords[i] == new Vector2I(1, 26)
+					|| m.eatenDotCoords[i] == new Vector2I(26, 26)) bigDotsEaten++;
 				}
 
 				dotsEaten = m.eatenDotCoords.Count;
@@ -560,13 +533,6 @@ public partial class Game : Node2D
 		return newValue;
 	}
 
-	private void UpdateTargetTiles() {
-		for(int i = 0; i < ghostTargets.Count; i++) {
-			ghostTargets[i].Position = tml.MapToLocal(ghosts[i].targetPos);
-			if(!debug) ghostTargets[i].Position = tml.MapToLocal(new Vector2I(-1, -1));
-		}
-	}
-
 	private void SoundLoops() {
 		int sGhosts = 0;
 		int eGhosts = 0;
@@ -617,19 +583,19 @@ public partial class Game : Node2D
 					break;
 				
 				case soundStates.SIREN2:
-					PlayLoop("siren0");
+					PlayLoop("siren1");
 					break;
 
 				case soundStates.SIREN3:
-					PlayLoop("siren0");
+					PlayLoop("siren2");
 					break;
 
 				case soundStates.SIREN4:
-					PlayLoop("siren0");
+					PlayLoop("siren3");
 					break;
 				
 				case soundStates.SIREN5:
-					PlayLoop("siren0");
+					PlayLoop("siren4");
 					break;
 
 				case soundStates.FRIGHTENED:
